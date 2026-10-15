@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TRAP FULL</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect width=%2216%22 height=%2216%22 rx=%223%22 fill=%22%2312100c%22/%3E%3Cpath d=%22M4 3v5a4 4 0 0 0 8 0V3%22 stroke=%22%23d7c07a%22 stroke-width=%222.5%22 fill=%22none%22/%3E%3C/svg%3E">
+<meta name="description" content="A gross-out plumbing choice game from Pipe Petin. One night, one P-trap, one jar of jalapeños, and a clog named Kevin.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@Pipe_petin">
+<meta name="twitter:title" content="TRAP FULL">
+<meta name="twitter:description" content="A gross-out plumbing choice game from Pipe Petin. One night, one P-trap, one jar of jalapeños, and a clog named Kevin.">
+<meta name="twitter:image" content="https://jimmdunc-hub.github.io/trap-full/assets/og-card.png">
+<meta property="og:type" content="website">
+<meta property="og:title" content="TRAP FULL">
+<meta property="og:description" content="A gross-out plumbing choice game from Pipe Petin. One night, one P-trap, one jar of jalapeños, and a clog named Kevin.">
+<meta property="og:image" content="https://jimmdunc-hub.github.io/trap-full/assets/og-card.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://jimmdunc-hub.github.io/trap-full/">
+<meta property="og:image:alt" content="TRAP FULL title card: Pipe Petin and a clog named Kevin">
+<style>
+:root{--bg:#12100c;--panel:#1c1812;--ink:#f3e6c8;--muted:#a89878;--gunk:#6b8f3a;--warn:#e2a53a;--bad:#c4492c;--good:#d7c07a;--line:#3a3226}
+*{box-sizing:border-box;margin:0}
+html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,sans-serif;-webkit-text-size-adjust:100%}
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);-webkit-tap-highlight-color:transparent}
+#app{max-width:440px;margin:0 auto;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:100vh;min-height:100dvh}
+header{display:flex;align-items:center;gap:8px}
+header h1{font-size:1.1rem;letter-spacing:.08em;color:var(--good);flex:1}
+.iconbtn{min-width:44px;min-height:44px;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;font-size:1.1rem}
+.meters{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:.72rem;color:var(--muted)}
+.bar{height:8px;background:#000;border:1px solid var(--line);border-radius:4px;overflow:hidden;margin-top:2px}
+.bar i{display:block;height:100%;transition:width .4s}
+#mP i{background:var(--bad)}#mR i{background:var(--good)}#mT i{background:var(--warn)}
+#stage{position:relative;aspect-ratio:16/9;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:linear-gradient(#2a2318,#1c1812);image-rendering:pixelated}
+#stage img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#stageLabel{position:absolute;left:8px;top:6px;font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+#pipe{position:absolute;left:50%;bottom:0;width:60px;height:70px;margin-left:-30px;border:8px solid #8a8a7a;border-top:none;border-radius:0 0 40px 40px}
+#water{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(#6b8f3a,#4a5f22);opacity:.75;transition:height .6s}
+#stage.art #water{background:url(assets/img/water_overlay.png) 0 0/100% 400% repeat-x,rgba(107,143,58,.35);opacity:.9;animation:wf .8s steps(4) infinite}
+@keyframes wf{to{background-position:0 133.333%,0 0}}
+#stage.art:not(.nobg) #pipe{display:none}
+#stage.nobg{aspect-ratio:auto;height:120px}
+.spr{position:absolute;bottom:4%;image-rendering:pixelated;background-repeat:no-repeat;background-size:auto 100%}
+#pete{left:6%;width:15%;aspect-ratio:48/64;background-image:url(assets/img/pete_idle.png);background-size:200% 100%;animation:p2 1.6s steps(2) infinite}
+#pete.work{background-image:url(assets/img/pete_work.png);background-size:400% 100%;animation:p4 .8s steps(4) infinite}
+#rhonda{left:26%;width:15%;aspect-ratio:48/64;background-image:url(assets/img/rhonda_cake.png);background-size:200% 100%;animation:p2 2s steps(2) infinite;display:none}
+@keyframes p2{to{background-position:200% 0}}@keyframes p4{to{background-position:400% 0}}
+#kevin.spr{background-color:transparent;border:none;border-radius:0;background-size:300% 100%;animation:k3 .9s steps(3) infinite}
+#kevin.spr::before{content:none}
+@keyframes k3{to{background-position:300% 0}}
+#endtip{position:absolute;left:0;right:0;bottom:0;height:33.3%;display:none;align-items:center;justify-content:center;padding:4px 10px;font-size:.78rem;line-height:1.25;text-align:center;color:var(--good);background:rgba(18,16,12,.55)}
+.meters img,.toasticon{width:12px;height:12px;image-rendering:pixelated;vertical-align:-1px;margin-right:3px}
+.toasticon{width:20px;height:20px;vertical-align:-5px}
+#logo{width:min(80vw,360px);image-rendering:pixelated}
+#kevin{position:absolute;bottom:6px;right:18px;border-radius:50% 50% 40% 40%;background:#5e4a2a;border:2px solid #000;transition:all .5s;display:flex;align-items:center;justify-content:center;font-size:.6rem}
+#kevin::before{content:"• •";color:#fff}
+#stage .who{position:absolute;right:8px;top:6px;font-size:.7rem;color:var(--good)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+#text{font-size:1.02rem;line-height:1.45}
+#text em{color:var(--gunk)}
+#choices{display:flex;flex-direction:column;gap:8px}
+button.choice{min-height:48px;text-align:left;padding:10px 12px;background:#2a2318;color:var(--ink);border:1px solid var(--line);border-radius:8px;font-size:.98rem;cursor:pointer}
+button.choice:active{transform:scale(.99)}
+button.choice .k{color:var(--muted);margin-right:6px}
+button.choice.locked{opacity:.5;cursor:not-allowed}
+button.choice .hint{display:block;font-size:.75rem;color:var(--warn);margin-top:2px}
+button:focus-visible{outline:3px solid var(--good);outline-offset:2px}
+#toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);max-width:420px;width:calc(100% - 24px);background:#0d0b08;border:2px solid var(--good);border-radius:10px;padding:12px;font-size:.9rem;display:none;z-index:20}
+#toast b{color:var(--good)}
+#app.shake{animation:shake .35s linear}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.end h2{color:var(--good);font-size:1.4rem;margin-bottom:6px}
+.end h3{font-size:.9rem;color:var(--warn);margin:12px 0 6px}
+.end ul{padding-left:18px;font-size:.88rem;line-height:1.4}
+.end li{margin-bottom:4px}
+.big{min-height:48px;width:100%;margin-top:8px;border-radius:8px;border:1px solid var(--line);background:var(--good);color:#12100c;font-weight:700;font-size:1rem;cursor:pointer}
+.big.alt{background:#2a2318;color:var(--ink)}
+#overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(10,8,6,.95);z-index:30;padding:24px;text-align:center;cursor:pointer}
+#overlay h1{font-size:clamp(2.5rem,12vw,4.5rem);color:var(--good);letter-spacing:.05em}
+#overlay p{color:var(--muted)}
+#overlay .tap{font-weight:700;font-size:1.3rem;animation:pulse 1.4s infinite}
+@keyframes pulse{50%{opacity:.4}}
+#overlay.hidden{display:none}
+#debug{position:fixed;top:env(safe-area-inset-top);left:0;background:#000c;color:#0f0;font:11px monospace;padding:4px;z-index:40;max-width:60vw;display:none}
+footer{font-size:.7rem;color:var(--muted);text-align:center;margin-top:auto}
+</style>
+</head>
+<body>
+<div id="overlay" role="button" tabindex="0" aria-label="Tap to start">
+  <img id="logo" src="assets/img/logo_trapfull.png" alt="TRAP FULL"><h1 id="logoText" style="display:none">TRAP FULL</h1>
+  <p>Pipe Petin · Plumbing and peppers</p>
+  <div class="tap">TAP TO START</div>
+</div>
+<div id="app">
+  <header><h1>TRAP FULL</h1><button class="iconbtn" id="mute" aria-label="Mute">🔊</button><button class="iconbtn" id="restartBtn" aria-label="Restart">↺</button></header>
+  <div class="meters">
+    <div><img src="assets/img/icon_pressure.png" alt="">Pressure<div class="bar" id="mP"><i></i></div></div>
+    <div><img src="assets/img/icon_rep.png" alt="">Reputation<div class="bar" id="mR"><i></i></div></div>
+    <div><img src="assets/img/icon_patience.png" alt="">Patience<div class="bar" id="mT"><i></i></div></div>
+  </div>
+  <div id="stage"><div id="water"></div><div id="pipe"></div><div id="pete" class="spr"></div><div id="rhonda" class="spr"></div><div id="kevin"></div><div id="endtip"></div><span id="stageLabel"></span><span class="who" id="who"></span></div>
+  <div class="card" id="text"></div>
+  <div id="choices"></div>
+  <footer id="foot"></footer>
+</div>
+<div id="toast" role="status"></div>
+<div id="debug"></div>
+<script>
+"use strict";
+const GAME_URL="https://jimmdunc-hub.github.io/trap-full/";
+const START={P:20,R:50,T:60,flags:{}};
+// Art: list files here once they exist in assets/img/ (empty = CSS stage, no network requests)
+const ART_AVAILABLE=["bg_truck.png","bg_bath_cabinet.png","bg_tub.png","bg_party.png","card_endPro.png","card_endNote.png","card_endKevin.png","card_endBlowout.png","card_endPepper.png","card_endYogurt.png"];
+// Audio: list names once files exist in assets/sfx|music/ (empty = synthesized fallback beeps)
+const AUDIO_AVAILABLE=[];
+
+const TIPS={
+trapSeal:"A P-trap holds a plug of water (the trap seal, 2–4 in. deep by code) that blocks sewer gas from coming into the house.",
+vent:"Drain vents let air into the pipes so water flows and traps don't get siphoned dry. Gurgling or slow drains can mean a clog or a vent problem. Changing or adding vents is code work; call a licensed plumber.",
+chemicals:"Skip caustic drain openers — snake or auger instead. They can damage old pipes and burn you, and never plunge or snake into a drain with chemical cleaner in it — it can splash back. Never mix drain chemicals.",
+ppe:"Gloves and eye protection for any clog work. Drain water is sewage-adjacent.",
+multiFixture:"If the tub backs up when the sink drains, the clog is downstream in a shared line or the main — not just the sink trap. Sewage backs up at the lowest fixture first. Main-line and sewer clogs are a job for a licensed plumber.",
+lowestFixture:"A main-line backup shows up at the lowest drain in the house first (a downstairs tub, shower or floor drain). If that one's filling up, it's the sewer line; call a licensed plumber.",
+overflow:"Use a cup plunger on a tub or sink, and block the overflow (wet rag) — or the other drain on a double sink — so it pushes on the clog instead of air.",
+mainShutoff:"Know where your main shutoff is. Often a house-side valve where the line enters (pier-and-beam: under the house; slab: near the front hose bib or garage) and the utility valve in the curb meter box, which belongs to the water utility — call them or a licensed plumber before touching it.",
+fireAnts:"Texas meter boxes are a favorite fire-ant spot. Open the lid with a tool and look before you reach.",
+slipJoint:"Slip-joint trap nuts seal with the washer, not tape. Bevel faces the joint; hand-tight plus about a quarter turn — don't crank plastic. Thread tape is for threads.",
+sTrap:"S-traps can siphon their own seal dry, so the IPC (1002.3) and UPC prohibit them in new work. A licensed plumber installs a properly vented P-trap.",
+fog:"Fats, oils, grease (dairy too) and hair are top clog causes. Grease goes in the trash, not the drain.",
+cleanout:"A main-line clog is cleared through the cleanout, usually outside near the house. Tree roots in old clay or cast-iron lines are a common Texas cause. Running a sewer machine is a job for a licensed plumber.",
+auger:"Let the cable do the work: feed it slow and don't force it. Forcing kinks the cable or makes it whip. Gloves on, hands clear.",
+noForce:"Don't force a snake; you can kink the cable or crack old pipe. Let the head do the work.",
+mainFirst:"Find and close the house main before you open up a pressurized line.",
+chemPlunge:"Never plunge after using chemical drain cleaner, because it can splash caustic on you. Tell the plumber what you poured.",
+testRun:"After a repair, run water and check every joint for drips before you call it done."
+};
+
+const scenes={
+s01:{who:"Darlene (radio)",bg:"truck",text:"Radio crackles. Darlene: \"Birthday party off Mockingbird Lane in Dallas. Upstairs sink's 'a little slow.' Mom's holding a cake like a hostage.\"",
+ choices:[{label:"\"On my way, Darlene.\"",next:"s02",effects:{T:5},sfx:"radio_static"},
+          {label:"\"Define slow.\"",next:"s02",effects:{R:3,T:-5},sfx:"radio_static"}]},
+s02:{who:"you",bg:"truck",text:"Truck bed: auger, trap kit, a jar of homemade jalapeños. Your arms only carry two things.",
+ choices:[{label:"Auger + trap kit (forgot gloves)",next:"s03",effects:{R:5}},
+          {label:"Trap kit + peppers",next:"s03",effects:{R:2,P:5},setFlags:["jar"]},
+          {label:"Everything, two trips",next:"s03",effects:{T:-10,R:5},setFlags:["jar"]},
+          {label:"Grab gloves + glasses first",next:"s03",effects:{R:4},setFlags:["ppe"],correct:true,tip:"ppe"}]},
+s03:{who:"Mrs. Rhonda Tate",bg:"porch",text:"The door opens before you knock. Cake. Fear. A balloon drifts by like it's leaving.",
+ choices:[{label:"Walk in like a professional",next:"s04",effects:{R:4}},
+          {label:"\"I can already hear it breathing.\"",next:"s04",effects:{R:-8,T:4}}]},
+s04:{who:"Mrs. Tate / Mason",bg:"bath_cabinet",text:"Upstairs hall bath. \"It's just hair, right?\" Mason, 7, asks if the drain is a mouth.",
+ choices:[{label:"Promise it's just hair",next:"s05",effects:{R:-6,T:6}},
+          {label:"Never promise anything",next:"s05",effects:{R:6,T:-4},correct:true,tip:"fog"},
+          {label:"Tell Mason \"only on Tuesdays\"",next:"s05",effects:{T:8},setFlags:["mason"]}]},
+s05:{who:"the cabinet",bg:"bath_cabinet",text:"The doors stick, then give. The P-trap is proud of itself. Something in there has a part.",
+ choices:[{label:"Bag it. Don't identify it.",next:"s06",effects:{P:-5,R:2},setFlags:["bagged"],correct:true},
+          {label:"Look closer. For science.",next:"s07",effects:{R:-6,P:5}},
+          {label:"Pour a jug of chemical drain opener and wait",next:"s06",effects:{P:10,R:-10},setFlags:["chemicals"],correct:false,tip:"chemicals"}]},
+s06:{who:"you",bg:"bath_cabinet",text:"Contractor bag, double-knotted. It moves once.",
+ choices:[{label:"Take it to the truck",next:"s08",effects:{T:-5,R:3}},
+          {label:"Hand it to Uncle Dale \"for safekeeping\"",next:"s08",effects:{T:6,R:-4}}]},
+s07:{who:"you, unfortunately",bg:"bath_cabinet",text:"Hair, a birthday candle, a Lego hat, and a wet receipt for \"industrial yogurt\" — in YOUR handwriting. The standing water stays put.",
+ choices:[{label:"Pocket the receipt",next:"s08",effects:{R:-2},setFlags:["evidence"],tip:"trapSeal"},
+          {label:"Pretend you didn't see it",next:"s08",effects:{P:5},tip:"trapSeal"},
+          {label:"Eat the receipt",next:"s08",effects:{R:-20,T:10}}]},
+s08:{who:"the line",bg:"bath_cabinet",drift:true,text:"The snake goes in cheerful and comes back offended. Somewhere, {kevin} stirs.",
+ variants:[{if:{flags:["chemicals"]},text:"The snake goes in cheerful and comes back offended. Also: you're snaking into lye. Splash risk."},
+           {if:{P:">=70"},text:"The snake goes in and the drain pushes back. {kevin} does not want visitors."}],
+ choices:[{label:"Crank it, establish dominance",next:"s09",effects:{P:-5,R:-8},correct:false,tip:"noForce",chemPenalty:true,note:"You kink the cable."},
+          {label:"Feed it slow, let the head do the work",next:"s09",effects:{P:-8,R:6},correct:true,tip:"auger",chemPenalty:true},
+          {label:"Snake it again",next:"s09",effects:{P:-20,T:-10},requires:{P:"<70"},lockHint:"Too much pressure (needs Pressure under 70)"}]},
+s09:{who:"the downstairs tub",bg:"tub",drift:true,enterTip:"lowestFixture",text:"Downstairs, the tub (lowest fixture in the house) sighs like it has opinions: the backup always shows up at the lowest drain first. Bubbles spell nothing. Yet.",
+ variants:[{if:{P:">=70"},text:"The downstairs tub burps. The bubbles almost spell KEVIN RAY JR."}],
+ choices:[{label:"Plunge with the overflow open",next:"s10",effects:{P:-2,R:-3},correct:false,tip:"overflow",chemPlunge:true,note:"The overflow gurgles back at you."},
+          {label:"Rag in the overflow, then plunge",next:"s10",effects:{P:-12,R:6},correct:true,tip:"overflow",chemPlunge:true},
+          {label:"Ask: does the tub back up when the sink drains?",next:"s10",effects:{R:5},setFlags:["diagnosed"],correct:true,tip:"multiFixture"}]},
+s10:{who:"the party",bg:"party",text:"A brown rose blooms in the downstairs tub during \"Happy Birthday.\" Someone claps, incorrectly.",
+ choices:[{label:"Kill the water main",next:"s11",effects:{R:8},correct:true,tip:"mainShutoff"},
+          {label:"Tell them it's a feature",next:"s18",effects:{R:-16,P:12,T:10}},
+          {label:"\"Who here buys industrial yogurt?\"",next:"s16",effects:{T:-8},requires:{flags:["evidence"]},lockHint:"Needs evidence"}]},
+s11:{who:"the house",bg:"party",drift:true,text:"No shutoff under the sink or in the hall. Of course. The house main is either under the house or out by the front hose bib.",
+ choices:[{label:"Crawlspace",next:"s12",effects:{R:3}},
+          {label:"House shutoff by the front hose bib",next:"s13",effects:{P:5}},
+          {label:"Skip the main — go straight to the outside cleanout",next:"s23",effects:{R:8},setFlags:["cleanoutFirst"],requires:{flags:["diagnosed"]},lockHint:"Diagnose the tub first",correct:true,tip:"cleanout"}]},
+s12:{who:"the possum",bg:"crawlspace",text:"Possum. Not hostile. Judging. The valve is behind it.",
+ choices:[{label:"Offer the possum a pepper",next:"s14",effects:{R:10},setFlags:["peppers","peppersUsed"],requires:{flags:["jar"]},lockHint:"Needs the pepper jar",sfx:"possum_hiss"},
+          {label:"Wait it out",next:"s14",effects:{P:15}},
+          {label:"Crawl past, respectfully",next:"s14",effects:{R:4,T:-6},correct:true,tip:"mainShutoff"}]},
+s13:{who:"the house shutoff",bg:"house_shutoff",text:"The house shutoff sits in a valve box by the front hose bib, lid rusted shut. Fire ants have a subdivision. The curb valve is the water utility's; if the house valve won't hold, call the water department.",
+ choices:[{label:"Lift the lid with a lid hook and check for ants",next:"s14",effects:{R:4},correct:true,tip:"fireAnts"},
+          {label:"Ask Dale where the house valve is",next:"s14",effects:{R:5},setFlags:["dale"],requires:{R:">=60"},lockHint:"Reputation 60+"},
+          {label:"Reach in bare-handed",next:"s14",effects:{R:-6,T:-6,P:5},correct:false,tip:"fireAnts",sfx:"fire_ant_sting"}]},
+s14:{who:"the house",bg:"party",onEnter:["mainOff"],text:"Main is off. The quiet is worse. Something settles like it took a plea deal.",
+ choices:[{label:"Report to Rhonda first",next:"s15",effects:{T:10},requires:{notFlags:["rhondaLeft"]},lockHint:"Rhonda left to deal with the party"},
+          {label:"Get straight to work",next:"s15",effects:{R:5,T:-5}}]},
+s15:{who:"you",bg:"bath_cabinet",text:"The old trap is 1987 chrome, held together with hope. Rebuild time.",
+ choices:[{label:"Mason holds the flashlight",next:"s23",effects:{P:-10,R:5,T:5},requires:{T:">=70",notFlags:["rhondaLeft"]},lockHint:"Patience 70+",lockHintAlt:{if:{flags:["rhondaLeft"]},text:"Rhonda took Mason to the party"}},
+          {label:"Dale helps",next:"s23",effects:{P:-10,R:3},requires:{flags:["dale"]},lockHint:"Needs Dale on your side"},
+          {label:"Washers bevel-in, hand-tight + quarter turn",next:"s23",effects:{R:10,T:-8,P:-5},correct:true,tip:"slipJoint",sfx:"wrench_ratchet"},
+          {label:"Wrap the slip nuts in thread tape and crank 'em",next:"s23",effects:{R:-15,P:5},correct:false,tip:"slipJoint"},
+          {label:"Reinstall it as an S-trap, saves a fitting",next:"s23",effects:{R:-12},correct:false,tip:"sTrap"}]},
+s16:{who:"Uncle Dale",bg:"party",text:"Dale reclines. \"That receipt's from '19.\" He borrowed your notepad on the Hendersons job.",
+ choices:[{label:"Laugh it off together",next:"s17",effects:{T:6},setFlags:["dale"]},
+          {label:"Read the receipt aloud to the party",next:"s17",effects:{R:-5,T:-12},setFlags:["dale"],sfx:"crowd_clap_wrong"}]},
+s17:{who:"Dale / your truck",bg:"truck",drift:true,text:"The yogurt went down the drain \"to culture the pipes.\" Dale's theory. Your truck cooler holds the proof: an empty tub.",
+ choices:[{label:"Shut the main with Dale's help",next:"s14",effects:{R:5},setFlags:["dale"],tip:"fog"},
+          {label:"Make Dale shut the main alone",next:"s14",effects:{P:10,T:4},tip:"fog"}]},
+s18:{who:"Mrs. Tate",bg:"party",onEnter:["kevinNamed"],text:"\"So it's like a fountain?\" Mason names it {kevin}.",
+ choices:[{label:"Lean in: give a tour of {kevin}",next:"s19",effects:{T:10,P:10}},
+          {label:"Backpedal",next:"s19",effects:{R:-4,P:5}}]},
+s19:{who:"{kevin}",bg:"party",drift:true,text:"<em>glug.</em> {kevin} crosses the threshold.",
+ variants:[{if:{P:">=70"},text:"<em>GLUG.</em> {kevin} crosses the threshold and gets another middle name."}],
+ choices:[{label:"Feed {kevin} cake (it helps?)",next:"s20",effects:{P:15,T:10}},
+          {label:"Move the party to the porch",next:"s20",effects:{T:-10,R:6}}]},
+s20:{who:"{kevin}",bg:"party",drift:true,text:"{kevin} and you, eye to drain. The party is filming.",
+ choices:[{label:"Plunger duel",next:"s21",effects:{P:-10,R:4},sfx:"plunger_thwop"},
+          {label:"Sing to {kevin}",next:"s21",effects:{T:12,R:-6}}]},
+s21:{who:"{kevin}",bg:"party",drift:true,text:"{kevin} seems to want... equity.",
+ choices:[{label:"Invoice {kevin}",next:"endKevin",correct:false,tip:"mainFirst"},
+          {label:"Fight back: go for the main",next:"s22",effects:{R:6},correct:true,tip:"mainFirst"}]},
+s22:{who:"the house shutoff",bg:"house_shutoff",forceIf:{P:">=85",to:"endKevin"},text:"You sprint for the house shutoff where the line enters by the garage. Ants. Destiny. If the house valve won't hold, call the water department.",
+ choices:[{label:"Bare-hand the valve",next:"s15",effects:{R:-5,T:-5},setFlags:["mainOff"],correct:false,tip:"fireAnts",sfx:"fire_ant_sting",note:"Fire ants. Many. You learn a new dance, and the party films it."},
+          {label:"Gloves first, check the box",next:"s15",effects:{R:5},setFlags:["mainOff"],correct:true,tip:"fireAnts"},
+          {label:"Get Dale",next:"s15",setFlags:["mainOff","dale"],requires:{R:">=60"},lockHint:"Reputation 60+"},
+          {label:"Keep cranking the house valve, it's almost through",next:"s15",effects:{P:20,R:-4},setFlags:["mainOff"],showIf:{P:">=70"},correct:false,tip:"mainFirst"}]},
+s23:{who:"backyard cleanout",bg:"backyard_cleanout",text:"The real cause: roots in the old sewer line, reached through the backyard cleanout. Rhonda watches, holding the cake.",
+ variants:[{if:{flags:["rhondaLeft"]},text:"The real cause: roots in the old sewer line, reached through the backyard cleanout. Just you, the roots, and a porch light."}],
+ choices:[{label:"Clear the line properly",next:"s23t",effects:{P:-10,R:6,T:-6},correct:true,tip:"cleanout",sfx:"auger_whirr"},
+          {label:"Give Rhonda the peppers jar",next:"s24",effects:{R:8,T:10},setFlags:["peppers","peppersUsed"],requires:{flags:["jar"],notFlags:["peppersUsed","rhondaLeft"]},lockHint:"Needs the pepper jar",lockHintAlt:{if:{flags:["rhondaLeft"]},text:"Nobody here to give it to"}},
+          {label:"Hose it and hope",next:"s24",effects:{P:5,T:5}}]},
+s23t:{who:"the test run",bg:"backyard_cleanout",text:"Line's clear. Now the part nobody films: proving it.",
+ choices:[{label:"Main back on, run water, check every joint",next:"s24",effects:{R:6,P:-5},setFlags:["tested"],correct:true,tip:"testRun"},
+          {label:"Skip it, it's fine",next:"s24",effects:{T:5}}]},
+s24:{who:"the invoice",bg:"invoice",resolve:true,text:"Pen in hand. Line items: \"miscellaneous biohazard, emotional.\" What do you charge?",
+ choices:[{label:"Charge a trauma fee",next:"resolve",effects:{R:5},requires:{R:">=60"},lockHint:"Reputation 60+",sfx:"cash_register"},
+          {label:"Standard rate",next:"resolve",requires:{R:">=35"},lockHint:"Reputation 35+",lockHintAlt:{if:{notFlags:["rhondaLeft"]},text:"Rhonda won't pay (Reputation 35+)"},sfx:"cash_register"},
+          {label:"Write it off",next:"resolve",effects:{R:-5,T:10}}]},
+endPro:{end:true,tag:"Paid in Full",good:true,text:"\"Miscellaneous biohazard, emotional.\" They pay without blinking. You'll think about the receipt at stoplights.",endTip:"Test-run every repair and check each joint for drips."},
+endNote:{end:true,tag:"The Note",text:"You leave a note: \"Kevin lives here now.\" 2 a.m., Darlene: \"they say Kevin flushed a thank-you.\" Left on read.",endTip:"A note isn't a fix — if more than one fixture backs up, it's the main line; call a licensed plumber to clear it through the cleanout."},
+endKevin:{end:true,tag:"Kevin LLC",text:"Kevin accepts the invoice and a slice of cake. You are no longer the plumber; you are the witness.",endTip:"Skip the chemicals — snake it, and never plunge into a drain full of drain cleaner."},
+endBlowout:{end:true,tag:"Blowout",text:"The cabinet becomes a fountain. Mason calls it the best birthday ever. Your truck needs a new floor mat and a new life.",endTip:"Find your main shutoff before you need it, and know if there's a curb valve."},
+endPepper:{end:true,tag:"Pipe Petin Legend",good:true,text:"The jar goes on the mantel. Every party in Dallas County now asks for \"the pepper plumber.\"",endTip:"Keep fats, oils and grease (yes, yogurt) out of the drain. Peppers optional."},
+endYogurt:{end:true,tag:"The Receipt",good:true,text:"Dale signs the invoice. You frame the receipt. Case closed, line clear, culture finally dead.",endTip:"Hair + grease is the classic clog. Trash it, don't flush it."}
+};
+const ENDINGS=Object.keys(scenes).filter(k=>scenes[k].end);
+
+// ---------- pure logic ----------
+const clamp=v=>Math.max(0,Math.min(100,v));
+function cmp(val,expr){const m=/^(>=|<=|>|<|==)?\s*(-?\d+)$/.exec(expr);const op=m[1]||"==",n=+m[2];
+ return op===">="?val>=n:op==="<="?val<=n:op===">"?val>n:op==="<"?val<n:val===n;}
+function meets(req,st){if(!req)return true;
+ for(const k of ["P","R","T"])if(req[k]!==undefined&&!cmp(st[k],req[k]))return false;
+ if(req.flags&&!req.flags.every(f=>st.flags[f]))return false;
+ if(req.notFlags&&req.notFlags.some(f=>st.flags[f]))return false;return true;}
+function kevinName(P){return P>=70?"Kevin Ray Jr.":P>=40?"Kevin Ray":"Kevin";}
+function resolveEnding(st){const f=st.flags;
+ if(st.P>=100)return"endBlowout";
+ if(f.evidence&&f.dale)return"endYogurt";
+ if(st.R>=75&&f.peppers&&(f.tested||st.R>=80))return"endPepper";
+ if(st.R>=55&&st.T>=35&&(f.tested||st.R>=80))return"endPro";
+ return"endNote";}
+function cloneSt(s){return{scene:s.scene,P:s.P,R:s.R,T:s.T,flags:Object.assign({},s.flags),history:(s.history||[]).slice(),correct:s.correct||0,total:s.total||0,tipsWrong:(s.tipsWrong||[]).slice(),tipsRight:(s.tipsRight||[]).slice()};}
+// enter scene: returns list of events; may redirect
+function enterScene(st,id,ev){
+ for(let guard=0;guard<5;guard++){
+  st.scene=id;const sc=scenes[id];if(sc.end)return;
+  if(sc.onEnter)sc.onEnter.forEach(f=>st.flags[f]=true);
+  if(sc.drift&&!st.flags.mainOff){st.P=clamp(st.P+5);ev.push({type:"drift"});
+   if(st.P>=100){id="endBlowout";continue;}}
+  if(sc.enterTip)ev.push({type:"tip",tip:sc.enterTip});
+  if(st.T<=25&&!st.flags.rhondaLeft){st.flags.rhondaLeft=true;ev.push({type:"rhonda"});}
+  if(st.P>=100){id="endBlowout";continue;}
+  if(sc.forceIf&&meets(sc.forceIf,st)){id=sc.forceIf.to;continue;}
+  return;}
+}
+function applyChoice(st,c,ev){
+ const before={P:st.P,R:st.R};const e=Object.assign({},c.effects||{});
+ if(c.chemPenalty&&st.flags.chemicals)e.R=(e.R||0)-5;
+ let tip=c.tip,correct=c.correct,note=c.note;
+ if(c.chemPlunge&&st.flags.chemicals){e.R=(e.R||0)-10;e.P=(e.P||0)+5;tip="chemPlunge";correct=false;note="The plunger burps the drain cleaner right back up. Caustic splash-back on your sleeve; the cabinet now smells like a pool fire.";}
+ for(const k of ["P","R","T"])if(e[k])st[k]=clamp(st[k]+e[k]);
+ (c.setFlags||[]).forEach(f=>st.flags[f]=true);
+ if(correct!==undefined){st.total++;if(correct)st.correct++;}
+ if(note)ev.push({type:"note",text:note});
+ if(tip){(correct===false?st.tipsWrong:st.tipsRight).push(tip);ev.push({type:"tip",tip:tip});}
+ st.history.push(st.scene+":"+c.label);
+ ev.push({type:"delta",dP:st.P-before.P,dR:st.R-before.R});
+ let next;
+ if(st.P>=100)next="endBlowout";
+ else if(c.next==="resolve"){if(!st.flags.tested){st.R=clamp(st.R-10);ev.push({type:"callback"});}next=resolveEnding(st);}
+ else{next=c.next;
+  // cleanout-first route: s11C -> s23 -> s15 -> s24
+  if(st.flags.cleanoutFirst){if((st.scene==="s23"||st.scene==="s23t")&&next==="s24")next="s15";else if(st.scene==="s15"&&next==="s23")next="s24";}}
+ enterScene(st,next,ev);
+}
+
+// ---------- audio ----------
+let actx=null,muted=false,started=false;
+function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+muted=lsGet("trapfull.v2.mute")==="1";
+function unlockAudio(){const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
+ try{if(!actx)actx=new AC();if(actx.state==="suspended")actx.resume();
+  const b=actx.createBuffer(1,1,22050),s=actx.createBufferSource();s.buffer=b;s.connect(actx.destination);s.start(0);}catch(e){}}
+const SYNTH={click:[660,.05],choice_locked:[110,.12],tip_ding:[1320,.15],gurgle_small:[90,.2],gurgle_big:[60,.4],blowout_burst:[50,.6],cash_register:[990,.2],sting_good_end:[784,.5],sting_bad_end:[98,.6]};
+function beep(f,d){if(!actx||muted)return;try{const o=actx.createOscillator(),g=actx.createGain();o.type="square";o.frequency.value=f;
+ g.gain.setValueAtTime(.06,actx.currentTime);g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+d);o.connect(g);g.connect(actx.destination);o.start();o.stop(actx.currentTime+d);}catch(e){}}
+const audioEls={};
+function playFile(dir,name,loop){if(AUDIO_AVAILABLE.indexOf(name)<0)return false;try{
+ let a=audioEls[name];if(!a){a=new Audio();const ogg=a.canPlayType("audio/ogg")?"ogg":"mp3";a.src="assets/"+dir+"/"+name+"."+ogg;a.loop=!!loop;a.onerror=()=>{};audioEls[name]=a;}
+ a.currentTime=0;const p=a.play();if(p&&p.catch)p.catch(()=>{});return true;}catch(e){return false}}
+function playSfx(name){if(!name||muted||!started)return;if(!playFile("sfx",name)){const s=SYNTH[name]||SYNTH.click;beep(s[0],s[1]);}}
+let curMusic=null;
+function playMusic(name){if(curMusic===name)return;Object.keys(audioEls).forEach(k=>{if(k.startsWith("music_"))audioEls[k].pause();});curMusic=name;if(muted||!started||!name)return;playFile("music",name,true);}
+
+// ---------- UI ----------
+const $=id=>document.getElementById(id);
+const params=new URLSearchParams(location.search);const DEBUG=params.get("debug")==="1";
+let st=null,toastTimer=null;
+const ENDKEY="trapfull.v2.endings",SAVEKEY="trapfull.v2";
+function endingsFound(){try{const a=JSON.parse(lsGet(ENDKEY)||"[]");return Array.isArray(a)?a.filter(x=>ENDINGS.indexOf(x)>=0).filter((x,i,b)=>b.indexOf(x)===i):[]}catch(e){return[]}}
+const SAVE_VERSION=3;
+function save(){if(DEBUG)return;lsSet(SAVEKEY,JSON.stringify(Object.assign({v:SAVE_VERSION},st)));}
+function validSave(o){if(!o||typeof o!=="object"||o.v!==SAVE_VERSION)return false;if(!scenes[o.scene]||scenes[o.scene].end)return false;
+ for(const k of ["P","R","T","correct","total"])if(typeof o[k]!=="number"||!isFinite(o[k]))return false;
+ if(!o.flags||typeof o.flags!=="object"||Array.isArray(o.flags))return false;
+ for(const k of ["history","tipsWrong","tipsRight"])if(o[k]!==undefined&&!Array.isArray(o[k]))return false;
+ if((o.tipsWrong||[]).concat(o.tipsRight||[]).some(t=>!TIPS[t]))return false;return true;}
+function sub(t){return t.replace(/\{kevin\}/g,kevinName(st.P));}
+let toastQ=[];
+function showNextToast(){const t=$("toast");clearTimeout(toastTimer);const n=toastQ.shift();if(!n){t.style.display="none";return;}t.innerHTML=n[0];t.style.display="block";toastTimer=setTimeout(showNextToast,n[1]);}
+function toast(html,ms){toastQ.push([html,ms||2500]);if($("toast").style.display!=="block")showNextToast();}
+function clearToasts(){toastQ=[];clearTimeout(toastTimer);$("toast").style.display="none";}
+$("toast").addEventListener("click",showNextToast);
+function shake(){const a=$("app");a.classList.remove("shake");void a.offsetWidth;a.classList.add("shake");}
+function sceneText(sc){let t=sc.text;if(sc.variants)for(const v of sc.variants)if(meets(v.if,st)){t=v.text;break;}
+ if(st.flags.rhondaLeft&&!sc.end)t+='<br><em style="color:var(--muted)">Rhonda is off handling the party.</em>';return sub(t);}
+const KEVIN_SPR=[["kevin_t1.png",32],["kevin_t2.png",48],["kevin_t3.png",64]];
+const RHONDA_SCENES=["s03","s04","s14","s18","s23","s24"];
+function drawStage(sc){
+ const stage=$("stage");const art=ART_AVAILABLE.length>0;const hasBg=ART_AVAILABLE.indexOf(sc.end?("card_"+st.scene+".png"):("bg_"+sc.bg+".png"))>=0;stage.classList.toggle("art",art);stage.classList.toggle("nobg",!hasBg);
+ $("water").style.transition=sc.end?"none":"";$("water").style.height=sc.end?"0%":Math.round(st.P*0.6)+"%";
+ const k=$("kevin"),tier=st.P>=70?2:st.P>=40?1:0;k.title=kevinName(st.P);
+ if(art){k.className="spr";const [f,px]=KEVIN_SPR[tier];k.style.backgroundImage="url(assets/img/"+f+")";k.style.width=(px/320*100)+"%";k.style.height="auto";k.style.aspectRatio="1";}
+ else{const sz=[30,46,64][tier];k.style.width=sz+"px";k.style.height=sz+"px";}
+ k.style.display=!sc.end&&(parseInt(st.scene.slice(1),10)>=8||st.flags.kevinNamed)?"block":"none";
+ $("pete").style.display=art&&!sc.end?"block":"none";$("pete").classList.toggle("work",["s08","s09","s15","s23","s12","s13"].indexOf(st.scene)>=0);
+ $("rhonda").style.display=art&&!sc.end&&RHONDA_SCENES.indexOf(st.scene)>=0&&!st.flags.rhondaLeft?"block":"none";
+ $("stageLabel").textContent=sc.end?"":(sc.bg||"").replace(/_/g," ");$("who").textContent=sc.who?sub(sc.who):"";
+ const et=$("endtip");et.style.display=sc.end?"flex":"none";et.textContent=sc.end?"Pro Tip: "+sc.endTip:"";
+ let img=stage.querySelector("img.bg");const file=sc.end?("card_"+st.scene+".png"):("bg_"+sc.bg+".png");
+ if(ART_AVAILABLE.indexOf(file)>=0){if(!img){img=document.createElement("img");img.className="bg";img.alt="";img.onerror=()=>{const f=(img.getAttribute("src")||"").split("/").pop();const ix=ART_AVAILABLE.indexOf(f);if(ix>=0)ART_AVAILABLE.splice(ix,1);img.remove();};stage.prepend(img);}if(img.getAttribute("src")!=="assets/img/"+file)img.src="assets/img/"+file;}
+ else if(img)img.remove();}
+function drawMeters(){$("mP").firstChild.style.width=st.P+"%";$("mR").firstChild.style.width=st.R+"%";$("mT").firstChild.style.width=st.T+"%";
+ $("foot").textContent="P "+st.P+" · R "+st.R+" · T "+st.T+" · Endings found: "+endingsFound().length+"/6";
+ if(DEBUG){const d=$("debug");d.style.display="block";d.textContent=st.scene+" P"+st.P+" R"+st.R+" T"+st.T+" flags:"+Object.keys(st.flags).filter(f=>st.flags[f]).join(",");}}
+function render(){
+ const sc=scenes[st.scene];drawMeters();drawStage(sc);
+ playMusic(sc.end?null:(st.P>=70?"music_tension":"music_main"));
+ const box=$("choices");box.innerHTML="";
+ if(sc.end)return renderEnd(sc);
+ $("text").innerHTML=sceneText(sc);
+ sc.choices.forEach((c,i)=>{if(c.showIf&&!meets(c.showIf,st))return;const b=document.createElement("button");b.className="choice";const ok=meets(c.requires,st);
+  b.dataset.i=i;b.innerHTML='<span class="k">'+(box.children.length+1)+'.</span>'+(ok?"":"🔒 ")+sub(c.label)+(ok?"":'<span class="hint">'+(c.lockHintAlt&&meets(c.lockHintAlt.if,st)?c.lockHintAlt.text:c.lockHint)+'</span>');
+  if(!ok){b.classList.add("locked");b.setAttribute("aria-disabled","true");b.onclick=()=>playSfx("choice_locked");}
+  else b.onclick=()=>choose(i);box.appendChild(b);});}
+function visibleChoices(sc){return sc.choices.filter(c=>!c.showIf||meets(c.showIf,st));}
+function choose(i){const sc=scenes[st.scene];const c=sc.choices[i];if(!c||!meets(c.requires,st)||(c.showIf&&!meets(c.showIf,st)))return;
+ const ev=[];applyChoice(st,c,ev);playSfx(c.sfx||"click");
+ let msgs=[];
+ ev.forEach(e=>{if(e.type==="delta"&&(Math.abs(e.dP)>=10||e.dR<=-8))shake();
+  if(e.type==="tip"){msgs.push('<img class="toasticon" src="assets/img/tip_badge.png" alt=""><b>Pete says:</b> '+TIPS[e.tip]);setTimeout(()=>playSfx("tip_ding"),150);}
+  if(e.type==="note")msgs.push(e.text);
+  if(e.type==="callback")msgs.push("<b>Callback:</b> no test run, so the joint drips by morning and Rhonda calls you back. −10 Reputation.");
+  if(e.type==="drift"){msgs.push("<em>the tub gurgles</em> (+5 Pressure)");playSfx("gurgle_small");}});
+ ev.forEach(e=>{if(e.type==="rhonda")msgs.push("<b>Rhonda:</b> \"I have to go deal with the party.\" She takes the cake and leaves. She can't help for the rest of the night.");});
+ clearToasts();msgs.forEach(m=>toast(m,m.indexOf("Pete says")>=0?4500:2200));
+ const s2=scenes[st.scene];
+ if(s2.end){const f=endingsFound();if(f.indexOf(st.scene)<0&&!DEBUG){f.push(st.scene);lsSet(ENDKEY,JSON.stringify(f));}
+  playSfx(st.scene==="endBlowout"?"blowout_burst":s2.good?"sting_good_end":"sting_bad_end");}
+ save();render();window.scrollTo(0,0);}
+function renderEnd(sc){
+ let rec=st.tipsWrong.filter((v,i,a)=>a.indexOf(v)===i).slice(0,3).map(k=>"<li>"+TIPS[k]+"</li>");
+ if(!rec.length)rec=st.tipsRight.filter((v,i,a)=>a.indexOf(v)===i).slice(0,3).map(k=>"<li>✅ "+TIPS[k]+"</li>");
+ rec.push("<li><b>"+sc.endTip+"</b></li>");
+ $("text").innerHTML='<div class="end"><h2>'+sc.tag+'</h2><p>'+sc.text+'</p><p style="margin-top:8px;color:var(--muted)">Correct calls: '+st.correct+'/'+st.total+'</p><h3>Pro Tips from tonight</h3><ul>'+rec.join("")+'</ul></div>';
+ const box=$("choices");
+ const sh=document.createElement("button");sh.className="big";sh.textContent="Share your ending on X";sh.onclick=()=>shareEnding('I got the "'+sc.tag+'" ending in TRAP FULL. Kevin says hi. 🌶️🔧');
+ const rs=document.createElement("button");rs.className="big alt";rs.textContent="Take another call";rs.onclick=restart;
+ const cnt=document.createElement("div");cnt.style.cssText="text-align:center;color:var(--muted);margin-top:8px;font-size:.85rem";cnt.textContent="Endings found: "+endingsFound().length+"/6";
+ box.append(sh,rs,cnt);}
+function shareEnding(endingText){const text=String(endingText||"")+" "+GAME_URL;
+ const url="https://x.com/intent/post?text="+encodeURIComponent(text);
+ if(navigator.share){navigator.share({text:String(endingText||""),url:GAME_URL}).catch(e=>{if(e&&e.name!=="AbortError")openOnce(url,text);});return url;}
+ openOnce(url,text);return url;}
+function openOnce(url,text){let ok=false;
+ try{const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener noreferrer";document.body.appendChild(a);a.click();a.remove();ok=true;}catch(e){}
+ if(!ok)copyShare(text);}
+function copyShare(text){const done=()=>toast("Copied! Paste it into a post on X.");
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(done,()=>toast("Copy this: "+text,6000));else toast("Copy this: "+text,6000);}
+window.shareEnding=shareEnding;
+function newRun(){st=cloneSt(Object.assign({scene:"s01"},START));if(DEBUG){["P","R","T"].forEach(k=>{if(params.get(k)!==null)st[k]=clamp(+params.get(k))});if(scenes[params.get("scene")]&&!scenes[params.get("scene")].end)enterScene(st,params.get("scene"),[]);}}
+function restart(){if(!DEBUG){try{localStorage.removeItem(SAVEKEY)}catch(e){}}clearToasts();newRun();started=true;$("overlay").classList.add("hidden");save();render();window.scrollTo(0,0);}
+$("restartBtn").onclick=()=>{let ok=true;try{ok=window.confirm("Start a new call?")}catch(e){ok=true}if(ok)restart();};
+function setMuteIcon(){$("mute").textContent=muted?"🔇":"🔊";}
+$("mute").onclick=()=>{muted=!muted;lsSet("trapfull.v2.mute",muted?"1":"0");setMuteIcon();if(muted)Object.values(audioEls).forEach(a=>a.pause());else{const m=curMusic;curMusic=null;playMusic(m);}};
+setMuteIcon();
+document.addEventListener("keydown",e=>{if(!$("overlay").classList.contains("hidden")){if(e.key==="Enter"||e.key===" ")startGame();return;}
+ const n=parseInt(e.key,10);if(n>=1&&n<=5&&!scenes[st.scene].end){const b=$("choices").children[n-1];if(b)b.click();}
+ if(e.key==="Enter"&&$("toast").style.display==="block")showNextToast();});
+function startGame(choice){if(started&&$("overlay").classList.contains("hidden"))return;started=true;unlockAudio();$("overlay").classList.add("hidden");
+ if(choice==="new")restart();else render();}
+// boot
+(function boot(){let saved=null;try{saved=JSON.parse(lsGet(SAVEKEY)||"null")}catch(e){}
+ if(saved&&!validSave(saved)){saved=null;try{localStorage.removeItem(SAVEKEY)}catch(e){}}
+ const ov=$("overlay");
+ if(saved&&!DEBUG){st=cloneSt(saved);
+  const tap=ov.querySelector(".tap");tap.remove();
+  const c=document.createElement("button");c.className="big";c.textContent="Continue call";c.onclick=e=>{e.stopPropagation();startGame()};
+  const n=document.createElement("button");n.className="big alt";n.textContent="New call";n.onclick=e=>{e.stopPropagation();startGame("new")};
+  ov.append(c,n);ov.style.cursor="default";
+ }else{newRun();ov.addEventListener("click",()=>startGame());let tx=0,ty=0,tt=0;ov.addEventListener("touchstart",e=>{const t=e.changedTouches[0];tx=t.clientX;ty=t.clientY;tt=Date.now();},{passive:true});
+  ov.addEventListener("touchend",e=>{const t=e.changedTouches[0];if(Math.hypot(t.clientX-tx,t.clientY-ty)<12&&Date.now()-tt<600){e.preventDefault();startGame();}},{passive:false});}
+ render();})();
+
+// ---------- verify (?verify=1) ----------
+function verify(){
+ const ids=Object.keys(scenes),missing=[],seen=new Set(["s01"]),stack=["s01"];
+ ids.forEach(id=>(scenes[id].choices||[]).forEach(c=>{if(c.next!=="resolve"&&!scenes[c.next])missing.push(id+"->"+c.next)}));
+ const edges=id=>{const sc=scenes[id];let out=[];(sc.choices||[]).forEach(c=>out.push(c.next==="resolve"?["endPro","endNote","endPepper","endYogurt"]:[c.next]));
+  out=[].concat(...out);if(sc.forceIf)out.push(sc.forceIf.to);if(id==="s23"||id==="s23t")out.push("s15");if(id==="s15")out.push("s24");if(sc.drift||id==="s08"||id==="s22")out.push("endBlowout");return out;};
+ while(stack.length){const id=stack.pop();edges(id).forEach(n=>{if(scenes[n]&&!seen.has(n)){seen.add(n);stack.push(n)}})}
+ // decision counts via structural DFS (ignore gates; cleanoutFirst handled with flag)
+ let minD=1e9,maxD=0;
+ (function dfs(id,d,cf,vis){const sc=scenes[id];if(sc.end){if(id!=="endBlowout"){minD=Math.min(minD,d);maxD=Math.max(maxD,d)}return}
+  if(vis.includes(id)||d>40)return;
+  sc.choices.forEach(c=>{let nx=c.next==="resolve"?["endPro"]:[c.next];let cf2=cf||(c.setFlags||[]).includes("cleanoutFirst");
+   nx=nx.map(n=>cf2&&(id==="s23"||id==="s23t")&&n==="s24"?"s15":cf2&&id==="s15"&&n==="s23"?"s24":n);
+   if(sc.forceIf)nx=nx.concat([]);nx.forEach(n=>dfs(n,d+1,cf2,vis.concat(id)));});})("s01",0,false,[]);
+ // real-play search with gates & meters
+ const realEnd={},realScene=new Set(),memo=new Set();let states=0;
+ (function play(s,path){const key=s.scene+"|"+s.P+"|"+s.R+"|"+s.T+"|"+Object.keys(s.flags).filter(f=>s.flags[f]).sort().join(",")+"|"+s.correct+"/"+s.total;
+  if(memo.has(key))return;memo.add(key);states++;realScene.add(s.scene);const sc=scenes[s.scene];
+  if(sc.end){if(!realEnd[s.scene])realEnd[s.scene]=path.slice();return}
+  sc.choices.forEach((c,i)=>{if(!meets(c.requires,s)||(c.showIf&&!meets(c.showIf,s)))return;const s2=cloneSt(s);applyChoice(s2,c,[]);path.push(s.scene+"#"+(i+1));play(s2,path);path.pop();});
+ })((()=>{const s=cloneSt(Object.assign({scene:"s01"},START));enterScene(s,"s01",[]);return s})(),[]);
+ const playable=ids.filter(i=>!scenes[i].end).length,endings=ENDINGS.length;
+ const unreachable=ids.filter(i=>!seen.has(i)),unplayed=ids.filter(i=>!realScene.has(i));
+ const res={ok:!missing.length&&!unreachable.length&&endings===6&&playable>=24&&minD>=12&&maxD<=20,
+  scenes:playable,endings,missing,unreachable,minDecisions:minD,maxDecisions:maxD,
+  realPlay:{states,endingsReached:Object.keys(realEnd).sort(),scenesReached:realScene.size,unplayedScenes:unplayed,scripts:realEnd}};
+ window.__TRAP_FULL_VERIFY__=res;return res;}
+if(params.get("verify")==="1"){const r=verify();const pre=document.createElement("pre");pre.id="verifyOut";pre.textContent=JSON.stringify(r);document.body.appendChild(pre);}
+</script>
+</body>
+</html>
