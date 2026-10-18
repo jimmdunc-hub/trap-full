@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pepper Run · TRAP FULL · Petin PlumbCo</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Cpath d=%27M16 4h4v5h-4z%27 fill=%27%233c8d2f%27/%3E%3Cellipse cx=%2716%27 cy=%2719%27 rx=%277%27 ry=%2712%27 fill=%27%23ef4b3a%27 transform=%27rotate(-25 16 19)%27/%3E%3C/svg%3E">
+<style>html,body{margin:0;background:#16101f;color:#fff3e4;font:16px/1.4 system-ui,sans-serif}#intro{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;text-align:center}
+#intro button{font:inherit;font-weight:700;color:#16101f;background:#ef4b3a;border:0;border-radius:12px;padding:14px 26px;min-height:48px}#out{color:#d7c07a;max-width:420px}</style>
+</head><body>
+<div id="intro"><h1 style="margin:0;color:#ef4b3a">Pepper Run</h1><p>At Ms. Reyes’s slab job, Pete sends the Boy to the van for a bucket, chisel and dust mask. 30–45 seconds, grab the chilies.</p>
+<button type="button" id="go">Tap to start</button><p id="out" aria-live="polite"></p><a id="merchBtn" hidden target="_blank" rel="noopener" style="display:none;align-items:center;justify-content:center;min-height:52px;min-width:260px;border-radius:12px;background:#e0a33a;color:#12100c;font-weight:700;text-decoration:none">Get the Merch</a><a href="../../" style="color:#d7c07a">Play TRAP FULL</a></div>
+<script src="pepper-run.js"></script>
+<script>
+(function(){const q=new URLSearchParams(location.search);const go=document.getElementById("go"),out=document.getElementById("out");
+ const text={high:"Right tools, first try. +3 Patience (or a botched van run gets fixed).",mid:"Normal van run, no change.",low:"He also brought a drink. −5 Patience on top of the normal van run."};
+ function run(){go.disabled=true;PepperRun.start({assetBase:"../../assets/img/",forceResult:q.get("pepperResult"),onDone:function(r){go.disabled=false;go.textContent="Run again";
+  out.textContent=(r.skipped?"Skipped (normal result). ":"Chilies "+r.chilies+"/"+r.total+(r.fell?", fell into the hedge":"")+(r.fullClear?", full clear (+1 to the pepper jar)":"")+". ")+(r.skipped?"":text[r.band]);window.__pepperLast=r;const m=document.getElementById("merchBtn");m.href=PepperRun.MERCH_LINK;m.hidden=false;m.style.display="flex";}});}
+ go.onclick=run;})();
+</script></body></html>

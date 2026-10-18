@@ -34,7 +34,8 @@ header h1{font-size:1.1rem;letter-spacing:.08em;color:var(--good);flex:1}
 #mP i{background:var(--bad)}#mR i{background:var(--good)}#mT i{background:var(--warn)}
 #stage{position:relative;aspect-ratio:16/9;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:linear-gradient(#2a2318,#1c1812);image-rendering:pixelated}
 #stage img.bg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-#stageLabel{position:absolute;left:8px;top:6px;font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+#stageLabel{position:absolute;left:6px;top:6px;z-index:3;font-size:.7rem;line-height:1.2;color:#f3e6c4;text-transform:uppercase;letter-spacing:.1em;background:rgba(0,0,0,.6);padding:2px 6px;border-radius:3px;box-shadow:0 0 0 1px rgba(0,0,0,.35);text-shadow:1px 1px 0 #000;pointer-events:none}
+#stageLabel:empty{display:none}
 #pipe{position:absolute;left:50%;bottom:0;width:60px;height:70px;margin-left:-30px;border:8px solid #8a8a7a;border-top:none;border-radius:0 0 40px 40px}
 #water{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(#6b8f3a,#4a5f22);opacity:.75;transition:height .6s}
 #stage.art #water{background:url(assets/img/water_overlay.png) 0 0/100% 400% repeat-x,rgba(107,143,58,.35);opacity:.9;animation:wf .8s steps(4) infinite}
@@ -42,21 +43,29 @@ header h1{font-size:1.1rem;letter-spacing:.08em;color:var(--good);flex:1}
 #stage.art:not(.nobg) #pipe{display:none}
 #stage.hasprop #pipe{display:none}
 #stage.nobg{aspect-ratio:auto;height:120px}
+#stage.nobg.tallart{aspect-ratio:16/9;height:auto}
+#stage.endcard img.bg{top:8px;bottom:auto;height:auto}
+#stage.art.cleanwater #water{background:url(assets/img/water_overlay.png) 0 0/100% 400% repeat-x,rgba(70,130,190,.25);filter:hue-rotate(110deg) saturate(.55);opacity:.55}
+#stage .who.low{top:auto;bottom:6px}
+#ov{position:absolute;display:none;background-size:100% 100%;image-rendering:pixelated;pointer-events:none}
+body.toastPad{padding-bottom:var(--toastH,0px)}
 .spr{position:absolute;bottom:4%;image-rendering:pixelated;background-repeat:no-repeat;background-size:auto 100%}
 #pete{left:6%;width:15%;aspect-ratio:48/64;background-image:url(assets/img/pete_idle.png);background-size:200% 100%;animation:p2 1.6s steps(2) infinite}
 #pete.work{background-image:url(assets/img/pete_work.png);background-size:400% 100%;animation:p4 .8s steps(4) infinite}
 #rhonda{left:26%;width:15%;aspect-ratio:48/64;background-image:url(assets/img/rhonda_cake.png);background-size:200% 100%;animation:p2 2s steps(2) infinite;display:none}
-@keyframes p2{to{background-position:200% 0}}@keyframes p4{to{background-position:400% 0}}
+/* steps(N) sheets: background-position % moves (container - image) * p, so frame k needs k/(N-1); end at N/(N-1) */
+@keyframes p2{to{background-position:200% 0}}@keyframes p4{to{background-position:133.333% 0}}
 #kevin.spr{background-color:transparent;border:none;border-radius:0;background-size:300% 100%;animation:k3 .9s steps(3) infinite}
 #kevin.spr::before{content:none}
-@keyframes k3{to{background-position:300% 0}}
+@keyframes k3{to{background-position:150% 0}}
 #endtip{position:absolute;left:0;right:0;bottom:0;height:33.3%;display:none;align-items:center;justify-content:center;padding:4px 10px;font-size:.78rem;line-height:1.25;text-align:center;color:var(--good);background:rgba(18,16,12,.55)}
 .meters img,.toasticon{width:12px;height:12px;image-rendering:pixelated;vertical-align:-1px;margin-right:3px}
 .toasticon{width:20px;height:20px;vertical-align:-5px}
 #logo{width:min(80vw,360px);image-rendering:pixelated}
 #kevin{position:absolute;bottom:6px;right:18px;border-radius:50% 50% 40% 40%;background:#5e4a2a;border:2px solid #000;transition:all .5s;display:flex;align-items:center;justify-content:center;font-size:.6rem}
 #kevin::before{content:"• •";color:#fff}
-#stage .who{position:absolute;right:8px;top:6px;font-size:.7rem;color:var(--good)}
+#stage .who{position:absolute;right:6px;top:6px;z-index:3;font-size:.7rem;line-height:1.2;color:var(--good);background:rgba(0,0,0,.6);padding:2px 6px;border-radius:3px;text-shadow:1px 1px 0 #000;pointer-events:none}
+#stage .who:empty{display:none}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
 #text{font-size:1.02rem;line-height:1.45}
 #text em{color:var(--gunk)}
@@ -138,6 +147,7 @@ body.panelOpen #app{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
   <div id="codeTip"></div>
   <div class="tap" id="tapHint">TAP TO START</div>
   <button type="button" class="big" id="btnWeek">This week's call</button>
+  <a class="big" id="btnPepper" href="experiments/pepper-pipe/pepper-run.html" onclick="event.stopPropagation()" style="display:flex;align-items:center;justify-content:center;text-decoration:none;background:#ef4b3a;color:#16101f;margin-top:8px">🌶️ Bonus: Pepper Run</a>
   <div class="row">
     <button type="button" class="big alt" id="btnSelect">Episode select</button>
     <button type="button" class="iconbtn muteBtn" aria-label="Mute">🔊</button>
@@ -155,7 +165,7 @@ body.panelOpen #app{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
     <div><img src="assets/img/icon_rep.png" alt=""><span id="lR">Reputation</span><div class="bar" id="mR"><i></i></div></div>
     <div><img src="assets/img/icon_patience.png" alt=""><span id="lT">Patience</span><div class="bar" id="mT"><i></i></div></div>
   </div>
-  <div id="stage"><div id="water"></div><div id="pipe"></div><div id="pete" class="spr"></div><div id="rhonda" class="spr"></div><div id="dale" class="spr"></div><div id="prop" class="spr"></div><div id="dcardSpr" class="spr"></div><div id="kevin"></div><div id="endtip"></div><span id="stageLabel"></span><span class="who" id="who"></span></div>
+  <div id="stage"><div id="ov" aria-hidden="true"></div><div id="water"></div><div id="pipe"></div><div id="pete" class="spr"></div><div id="rhonda" class="spr"></div><div id="dale" class="spr"></div><div id="prop" class="spr"></div><div id="dcardSpr" class="spr"></div><div id="kevin"></div><div id="endtip"></div><span id="stageLabel"></span><span class="who" id="who"></span></div>
   <div class="card" id="text"></div>
   <div id="choices"></div>
   <footer id="foot"></footer>
@@ -355,14 +365,22 @@ function useEpisode(id){
  if(frame&&EP.resultFrame&&EP.resultFrame.src)frame.src=EP.resultFrame.src;
 }
 function showStub(){return params.get("dev")==="1";}
+// Release gating: an episode is listed, playable and featured once its release date (YYYY-MM-DD) is today or earlier
+// in the player's local date. ?dev=1 shows unreleased ones; ?today=YYYY-MM-DD (or window.TRAP_TODAY, set only by the
+// private test build) overrides the date for QA.
+function todayStr(){const ok=v=>{if(typeof v!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;const [y,m,d]=v.split("-").map(Number);const t=new Date(Date.UTC(y,m-1,d));return t.getUTCFullYear()===y&&t.getUTCMonth()===m-1&&t.getUTCDate()===d;};const q=params.get("today");if(ok(q))return q;if(ok(window.TRAP_TODAY))return window.TRAP_TODAY;
+ const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function isReleased(id){const ep=EPISODES[id];if(!ep)return false;const ix=(window.EPISODES_INDEX||[]).find(e=>e.id===id);const rel=(ix&&ix.release)||ep.release||"";
+ return !/^\d{4}-\d{2}-\d{2}$/.test(rel)||rel<=todayStr();}
+function canPlay(id){return !!EPISODES[id]&&(showStub()||(isReleased(id)&&!EPISODES[id].stub));}
 function episodeList(){
  const index=window.EPISODES_INDEX||[],seen={},rows=[];
  index.forEach(e=>{
-  if(!EPISODES[e.id])return;const ep=EPISODES[e.id];if(ep.stub&&!showStub())return;seen[e.id]=1;
+  if(!EPISODES[e.id])return;const ep=EPISODES[e.id];seen[e.id]=1;if(ep.stub&&!showStub())return;if(!isReleased(e.id)&&!showStub())return;
   rows.push({id:e.id,title:ep.title,week:ep.week,release:e.release||ep.release||""});
  });
  Object.keys(EPISODES).forEach(id=>{
-  if(seen[id])return;const ep=EPISODES[id];if(ep.stub&&!showStub())return;
+  if(seen[id])return;const ep=EPISODES[id];if(ep.stub&&!showStub())return;if(!isReleased(id)&&!showStub())return;
   rows.push({id:id,title:ep.title,week:ep.week,release:ep.release||""});
  });
  rows.sort((a,b)=>b.week-a.week||(a.id<b.id?-1:1));
@@ -370,7 +388,7 @@ function episodeList(){
 }
 function newestReal(){
  const all=episodeList();
- for(let i=0;i<all.length;i++)if(!EPISODES[all[i].id].stub)return all[i];
+ for(let i=0;i<all.length;i++)if(!EPISODES[all[i].id].stub&&isReleased(all[i].id))return all[i];
  return all[0]||null;
 }
 function registerBuiltinEp00(){
@@ -486,12 +504,19 @@ function applyChoice(st,c,ev,idx){
  if(c.chemPenalty&&st.flags.chemicals)e.R=(e.R||0)-5;
  if(c.chemPlunge&&st.flags.chemicals){e.R=(e.R||0)-10;e.P=(e.P||0)+5;tip="chemPlunge";correct=false;note="The plunger burps the drain cleaner right back up. Caustic splash-back on your sleeve; the cabinet now smells like a pool fire.";}
  if(c.alt&&meets(c.alt.if,st)){const a=c.alt;for(const k in (a.addEffects||{}))e[k]=(e[k]||0)+a.addEffects[k];if(a.tip)tip=a.tip;if(a.correct!==undefined)correct=a.correct;if(a.note)note=a.note;}
- if(c.vanRun&&EP.vanRunLines){const V=EP.vanRunLines;const failAt=V.chance===undefined?0.75:V.chance;
-  if(rng(st)<failAt){const lines=V.fail||[""];const line=lines[Math.floor(rng(st)*lines.length)]||"";
+ let vanFail=null;if(c.vanRun&&EP.vanRunLines){const V=EP.vanRunLines;const failAt=V.chance===undefined?0.75:V.chance;
+  if(rng(st)<failAt){vanFail={d:0,fP:0,s:0};const lines=V.fail||[""];const line=lines[Math.floor(rng(st)*lines.length)]||"";
    const lo=(V.failT&&V.failT[0])||5,hi=(V.failT&&V.failT[1])||10;const d=lo+Math.floor(rng(st)*(hi-lo+1));
-   e.T=(e.T||0)-d;if(V.failP)e.P=(e.P||0)+V.failP;st.penaltyMs=(st.penaltyMs||0)+(V.failSeconds===undefined?45:V.failSeconds)*1000;
-   note=line+" (−"+d+" Patience"+(V.failP?", +"+V.failP+" "+((EP.meterLabels&&EP.meterLabels.P)||"Pressure"):"")+", +"+(V.failSeconds===undefined?45:V.failSeconds)+" s)";if(V.failTip)tip=V.failTip;correct=false;}
+   const fP=Number.isFinite(+V.failP)?+V.failP:0;e.T=(e.T||0)-d;if(fP)e.P=(e.P||0)+fP;st.penaltyMs=(st.penaltyMs||0)+(V.failSeconds===undefined?45:V.failSeconds)*1000;vanFail={d:d,fP:fP,s:(V.failSeconds===undefined?45:V.failSeconds)*1000};
+   note=line+" (−"+d+" Patience"+(fP?", +"+fP+" "+((EP.meterLabels&&EP.meterLabels.P)||"Pressure"):"")+", +"+(V.failSeconds===undefined?45:V.failSeconds)+" s)";if(V.failTip)tip=V.failTip;correct=false;}
   else{const lines=V.success||[""];e.T=(e.T||0)+(V.successT===undefined?3:V.successT);note=lines[Math.floor(rng(st)*lines.length)]||"";}}
+ if(pepperAdj){const r=pepperAdj;pepperAdj=null;// pepper experiment only: rebalance relative to the normal van-run result above
+  if(!r.skipped&&r.band==="high"){const V=EP.vanRunLines||{};
+   if(vanFail){e.T=(e.T||0)+vanFail.d+(V.successT===undefined?3:V.successT);if(vanFail.fP)e.P=(e.P||0)-vanFail.fP;st.penaltyMs=(st.penaltyMs||0)-vanFail.s;tip=c.tip;correct=c.correct;
+    note="Pepper Run "+r.chilies+"/"+r.total+": the Boy beats the bad luck. "+((V.success&&V.success[0])||"Right tools.");}
+   else{e.T=(e.T||0)+3;note=(note?note+" ":"")+"Pepper Run "+r.chilies+"/"+r.total+": back fast. (+3 Patience)";}}
+  else if(!r.skipped&&r.band==="low"){e.T=(e.T||0)-5;note=(note?note+" ":"")+(r.fell?"(He took the hedge shortcut.) ":"")+PEPPER_DRINK+" (−5 Patience)";}
+  if(r.fullClear)note=(note?note+" ":"")+"Full clear: +1 to the pepper jar.";}
  for(const k of ["P","R","T"])if(e[k])st[k]=clamp(st[k]+e[k]);
  (c.setFlags||[]).forEach(f=>st.flags[f]=true);
  const col=EP.collectible;if(col&&st.scene===col.scene&&idx===col.choice){st.collected=true;ev.push({type:"note",text:"Collected: <b>"+col.name+"</b>"});
@@ -522,6 +547,11 @@ function lsDel(k){try{localStorage.removeItem(k)}catch(e){}}
 function jget(k,d){try{const v=JSON.parse(lsGet(k));return v===null||v===undefined?d:v}catch(e){return d}}
 function today(){try{return new Date().toISOString().slice(0,10)}catch(e){return ""}}
 const params=new URLSearchParams(location.search);const DEBUG=params.get("debug")==="1";const VERIFY=params.get("verify")==="1";
+// EXPERIMENT (pepper-pipe pitch A): ?pepper=1 turns the Ep2 van run (e2_06, the Boy fetches; e2_07 is the return) into the Pepper Run minigame.
+// Without the flag none of this runs and experiments/pepper-pipe/pepper-run.js is never requested. Off in verify.
+const PEPPER=params.get("pepper")!=="0"&&!VERIFY;/* launch: on by default, ?pepper=0 turns it off */const PEPPER_HOOK={ep:"ep02",scene:"e2_06",choice:0};let pepperAdj=null,pepperActive=false,pepperTok=0;
+function isPepperChoice(i){return PEPPER&&EP&&EP.id===PEPPER_HOOK.ep&&st&&st.scene===PEPPER_HOOK.scene&&i===PEPPER_HOOK.choice;}
+const PEPPER_DRINK="...and he hands Pete a second strawberry smoothie. \"For the road.\" Nobody is going anywhere.";
 const K={meta:"trapfull.v3.meta",shelf:"trapfull.v3.shelf",run:id=>"trapfull.v3."+id+".run",best:id=>"trapfull.v3."+id+".best",endings:id=>"trapfull.v3."+id+".endings"};
 let META={schema:1,lastEpisode:null,muted:false,played:{}};
 function loadMeta(){const m=jget(K.meta,null);if(m&&typeof m==="object"&&m.schema===1)META=m;if(!META.played||typeof META.played!=="object")META.played={};}
@@ -579,9 +609,12 @@ function playMusic(name){if(curMusic===name)return;Object.keys(audioEls).forEach
 // ---------- UI ----------
 const $=id=>document.getElementById(id);
 let st=null,toastTimer=null,toastQ=[],activeSince=null,lastResult=null,booted=false,weekLock=false;
-function showNextToast(){const t=$("toast");clearTimeout(toastTimer);const n=toastQ.shift();if(!n){t.style.display="none";return;}t.innerHTML=n[0];t.style.display="block";toastTimer=setTimeout(showNextToast,n[1]);}
+function showNextToast(){const t=$("toast");clearTimeout(toastTimer);const n=toastQ.shift();if(!n){t.style.display="none";document.body.classList.remove("toastPad");return;}t.innerHTML=n[0];t.style.display="block";setTimeout(toastClear,0);toastTimer=setTimeout(showNextToast,n[1]);}
+function toastClear(){const t=$("toast"),c=$("choices");if(t.style.display!=="block"){document.body.classList.remove("toastPad");return;}
+ document.body.style.setProperty("--toastH",(t.offsetHeight+28)+"px");document.body.classList.add("toastPad");
+ if(c&&c.children.length&&!$("app").classList.contains("is-hidden")){const tr=t.getBoundingClientRect(),cr=c.getBoundingClientRect();const over=cr.bottom-tr.top+8;if(over>0&&cr.top-over>0)window.scrollBy(0,over);}}
 function toast(html,ms){toastQ.push([html,ms||2500]);if($("toast").style.display!=="block")showNextToast();}
-function clearToasts(){toastQ=[];clearTimeout(toastTimer);const t=$("toast");if(t)t.style.display="none";}
+function clearToasts(){toastQ=[];clearTimeout(toastTimer);const t=$("toast");if(t)t.style.display="none";document.body.classList.remove("toastPad");}
 $("toast").addEventListener("click",showNextToast);
 function shake(){const a=$("app");a.classList.remove("shake");void a.offsetWidth;a.classList.add("shake");}
 function tokenName(key){const t=EP&&EP.tokens&&EP.tokens[key];if(t){for(let i=0;i<t.length;i++)if(st.P>=t[i][0])return t[i][1];return t[t.length-1][1];}
@@ -604,7 +637,7 @@ function fmtTime(secs){const s=Math.max(0,secs|0);return Math.floor(s/60)+":"+(s
 setInterval(()=>{if(!st||!EP||$("app").classList.contains("is-hidden"))return;const sc=sceneById[st.scene];if(!sc||sc.end)return;clockTick();drawFoot();},1000);
 function sceneText(sc){let t=sc.text;if(sc.variants)for(let i=0;i<sc.variants.length;i++)if(meets(sc.variants[i].if,st)){t=sc.variants[i].text;break;}
  const pl=EP.patienceLeave;if(pl&&st.flags[pl.flag]&&!sc.end&&pl.sceneLine)t+='<br><em style="color:var(--muted)">'+pl.sceneLine+"</em>";return sub(t);}
-function choiceLabel(c){const alts=c.labelAlt?[].concat(c.labelAlt):[];for(let i=0;i<alts.length;i++)if(alts[i]&&meets(alts[i].if,st))return alts[i].text;return c.label;}
+function choiceLabel(c){if(PEPPER&&EP&&EP.id===PEPPER_HOOK.ep&&st&&st.scene===PEPPER_HOOK.scene&&sceneById[st.scene]&&sceneById[st.scene].choices[PEPPER_HOOK.choice]===c)return sub(c.label)+" (Pepper Run 🌶)";const alts=c.labelAlt?[].concat(c.labelAlt):[];for(let i=0;i<alts.length;i++)if(alts[i]&&meets(alts[i].if,st))return alts[i].text;return c.label;}
 function panelText(ps,p){if(!ps.hackLines)return p.text||"";
  const ls=(st.hackTips||[]).filter((v,i,a)=>a.indexOf(v)===i).map(k=>ps.hackLines[k]).filter(Boolean);
  if(!ls.length)return p.text||"";
@@ -642,10 +675,14 @@ function drawStage(sc){
  if(pe){if(pr&&!sc.end){pe.style.display="block";pe.style.backgroundImage="url(assets/img/"+pr[0]+")";pe.className="spr"+(pr[1]>1?" f2":"");pe.style.width=(pr[2]/320*100*1.6)+"%";pe.style.aspectRatio=pr[2]+"/"+pr[3];}else pe.style.display="none";}
  const dl=S.dale?S.dale[pid]:null;const de=$("dale");
  if(de){if(art&&dl&&!sc.end){de.style.display="block";de.style.backgroundImage="url(assets/img/"+dl+".png)";}else de.style.display="none";}
+ const spritesOn=art&&!sc.end&&(!!pr||!!dl||ne.style.display==="block"||k.style.display==="block");stage.classList.toggle("tallart",!hasBg&&spritesOn);stage.classList.toggle("endcard",!!sc.end&&hasBg);
+ stage.classList.toggle("cleanwater",S.water==="clean");const ovd=art&&!sc.end&&S.overlays?S.overlays[st.scene]:null;const ove=$("ov");
+ if(ovd){ove.style.display="block";ove.style.backgroundImage="url(assets/img/"+ovd[0]+")";ove.style.left=(ovd[1]/320*100)+"%";ove.style.top=(ovd[2]/180*100)+"%";ove.style.width=(ovd[3]/320*100)+"%";ove.style.height=(ovd[4]/180*100)+"%";}else ove.style.display="none";
+ $("who").classList.toggle("low",!sc.end&&(!!ovd||(S.whoLow||[]).indexOf(sc.bg)>=0));
  const ps=st.panel?sceneById[st.panel]:sc;const ptxt=ps&&(ps.entryPanel&&st.panel?ps.entryPanel.text:panelText(ps,ps))||"";
  const dc=$("dcardSpr");
  if(dc){const show=art&&!sc.end&&String(ptxt).indexOf("{card}")>=0;dc.style.display=show?"block":"none";if(show&&spr.card)dc.style.backgroundImage="url(assets/img/"+spr.card+")";}
- $("stageLabel").textContent=sc.end?"":(sc.bg||"").replace(/_/g," ");$("who").textContent=sc.who?plain(sc.who):"";
+ $("stageLabel").textContent=sc.end?"":(typeof sc.caption==="string"?sc.caption:(EP.bgCaptions&&typeof EP.bgCaptions[sc.bg]==="string"?EP.bgCaptions[sc.bg]:(sc.bg||"").replace(/_/g," ")));$("who").textContent=sc.who?plain(sc.who):"";
  const et=$("endtip");et.style.display=sc.end?"flex":"none";et.textContent=sc.end?"Pro Tip: "+(sc.endTip||""):"";
  let img=stage.querySelector("img.bg");
  if(hasBg){if(!img){img=document.createElement("img");img.className="bg";img.alt="";img.onerror=function(){const f=(img.getAttribute("src")||"").split("/").pop();const ix=ART_AVAILABLE.indexOf(f);if(ix>=0)ART_AVAILABLE.splice(ix,1);img.remove();};stage.insertBefore(img,stage.firstChild);}if(img.getAttribute("src")!=="assets/img/"+file)img.src="assets/img/"+file;}
@@ -661,7 +698,7 @@ function render(){
  playMusic(sc.end?null:(st.P>=70?"music_tension":"music_main"));
  const box=$("choices");box.innerHTML="";
  document.body.classList.toggle("panelOpen",!!(st.panel&&sceneById[st.panel]));
- $("app").classList.toggle("compact",$("stage").classList.contains("nobg"));
+ $("app").classList.toggle("compact",$("stage").classList.contains("nobg")&&!$("stage").classList.contains("tallart"));
  if(st.panel&&sceneById[st.panel]){const ps=sceneById[st.panel],p=ps.entryPanel||ps;
   $("text").innerHTML='<div class="panel"><h3>'+sub(p.who||ps.who||"")+"</h3>"+sub(panelText(ps,p))+"</div>";
   $("who").textContent=plain(p.who||ps.who||"");
@@ -683,7 +720,12 @@ function present(ev){const msgs=[];ev.forEach(e=>{
  if(e.type==="note"||e.type==="event")msgs.push(sub(e.text));
  if(e.type==="drift"){msgs.push(sub(EP.driftText||"(+Pressure)"));playSfx("gurgle_small");}});
  clearToasts();msgs.forEach(m=>toast(m,m.indexOf("Pete says")>=0?4500:2200));}
-function choose(i){const sc=sceneById[st.scene];const c=sc&&sc.choices&&sc.choices[i];if(!c||!meets(c.requires,st)||(c.showIf&&!meets(c.showIf,st)))return;
+function choose(i,pr){const sc=sceneById[st.scene];let c=sc&&sc.choices&&sc.choices[i];if(!c||!meets(c.requires,st)||(c.showIf&&!meets(c.showIf,st)))return;
+ if(pepperActive&&pr===undefined)return;// no choice taps/keys while the minigame is open
+ if(pr===undefined&&isPepperChoice(i)&&window.PepperRun){const tok=++pepperTok,sc0=st.scene;pepperActive=true;clockTick();
+  const ok=window.PepperRun.start({forceResult:params.get("pepperResult"),onDone:r=>{if(tok!==pepperTok||!pepperActive)return;pepperActive=false;if(!st||st.scene!==sc0)return;choose(i,r||{skipped:true});}});
+  if(ok===false)pepperActive=false;return;}
+ if(pr){pepperAdj=pr;if(pr.fullClear){st.pepperJar=(st.pepperJar||0)+1;if(!DEBUG){META.pepperJar=(META.pepperJar||0)+1;saveMeta();}}window.__pepperLast=pr;}
  clockTick();const ev=[];applyChoice(st,c,ev,i);playSfx(c.sfx||"click");present(ev);
  const s2=sceneById[st.scene];
  if(s2&&s2.end){clockStop();finishRun(s2);if(!st.panel)endSting();}
@@ -744,23 +786,54 @@ function wrapText(g,text,x,y,maxW,lineH,maxLines){const words=String(text).split
   if(g.measureText(t).width>maxW&&line){g.fillText(n===maxLines-1?line+"…":line,x,y);y+=lineH;n++;line=words[i];if(n>=maxLines)return;}
   else line=t;}
  if(line&&n<maxLines)g.fillText(line,x,y);}
+function cardWindow(){const w=(EP.resultFrame&&EP.resultFrame.window)||[42,42,701,413];
+ // window is the transparent art box as corners [x1,y1,x2,y2] (inclusive), not x,y,width,height
+ return {x:w[0],y:w[1],w:w[2]-w[0]+1,h:w[3]-w[1]+1};}
+function paintFramedCard(g,icon){const R=lastResult;
+ // right panel (744,39)-(1164,420), bars (30,447)-(1164,534) and (30,561)-(1164,636) on result_frame_1200x675.png
+ const x=764,maxW=380;g.textBaseline="alphabetic";
+ g.fillStyle="#d7c07a";g.font="bold 22px sans-serif";g.fillText("Pipe Petin · TRAP FULL",x,82);
+ g.fillStyle="#f3e6c8";fitFont(g,"Ep "+R.week+": "+R.title,maxW,30,"bold");g.fillText("Ep "+R.week+": "+R.title,x,128);
+ g.fillStyle="#e2a53a";fitFont(g,R.tag,maxW,46,"bold");g.fillText(R.tag,x,192);
+ g.fillStyle="#f3e6c8";g.font="26px sans-serif";
+ g.fillText("Correct calls "+R.correct+"/"+R.total,x,252);
+ g.fillText("Score "+R.score+(R.newBest?"  · New best!":""),x,292);
+ g.fillText("Time "+fmtTime(R.secs),x,332);g.fillText("Seed "+R.seed,x,372);
+ if(R.collected&&EP.collectible){g.fillStyle="#d7c07a";g.font="20px sans-serif";g.fillText("✔ "+EP.collectible.name,x,404);if(icon)g.drawImage(icon,1100,372,44,44);}
+ g.fillStyle="#d7c07a";g.font="19px sans-serif";wrapText(g,"Code tip: "+(TIPS[EP.codeTip]||""),52,474,1092,25,3);
+ g.fillStyle="#a89878";g.font="20px sans-serif";g.fillText("Play the episode and find all "+ENDINGS.length+" endings.",52,606);}
 function renderCard(frame,endingArt,icon){const c=document.createElement("canvas");c.width=1200;c.height=675;const g=c.getContext("2d");g.imageSmoothingEnabled=false;
- if(frame){g.drawImage(frame,0,0,1200,675);const win=(EP.resultFrame&&EP.resultFrame.window)||[42,42,701,413];
-  if(endingArt)g.drawImage(endingArt,win[0],win[1],win[2],win[3]);
-  g.fillStyle="rgba(18,16,12,.72)";g.fillRect(28,468,1144,184);paintCardLines(g,48,512,1104);
-  if(icon)g.drawImage(icon,1100,500,48,48);}
+ if(frame){const W=cardWindow();g.fillStyle="#12100c";g.fillRect(W.x,W.y,W.w,W.h);
+  if(endingArt){const iw=endingArt.naturalWidth||endingArt.width,ih=endingArt.naturalHeight||endingArt.height;
+   // Ending cards carry a dark caption band in their bottom third (for the stage's Pro Tip); it is always cropped off.
+   // Default artFit "cover": the rest is center-cropped to fill the window. The ending's cardX (left edge in art pixels)
+   // or resultFrame.artPos (0 = left .. 1 = right) picks the crop so the main character stays in frame.
+   // artFit:"contain" letterboxes instead.
+   const RF=EP.resultFrame||{};const band=typeof RF.artBand==="number"?Math.max(0,Math.min(.5,RF.artBand)):1/3;
+   const sh=Math.round(ih*(1-band));const endSc=sceneById[lastResult.ending]||{};
+   const fit=typeof endSc.artFit==="string"?endSc.artFit:RF.artFit;if(fit!=="contain"){let sw=Math.round(sh*W.w/W.h),h2=sh,sx=0;if(sw>iw){sw=iw;h2=Math.round(iw*W.h/W.w);}
+    const room=iw-sw;const pos=typeof RF.artPos==="number"?RF.artPos:.5;
+    sx=typeof endSc.cardX==="number"?endSc.cardX:Math.round(room*pos);sx=Math.max(0,Math.min(room,sx));
+    g.drawImage(endingArt,sx,0,sw,h2,W.x,W.y,W.w,W.h);}
+   else{const dh=Math.round(W.w*sh/iw);g.drawImage(endingArt,0,0,iw,sh,W.x,W.y+Math.round((W.h-dh)/2),W.w,dh);}}
+  g.drawImage(frame,0,0,1200,675);paintFramedCard(g,icon);}
  else{g.fillStyle="#12100c";g.fillRect(0,0,1200,675);g.strokeStyle="#d7c07a";g.lineWidth=8;g.strokeRect(24,24,1152,627);paintCardLines(g,64,160,1072);
   if(icon)g.drawImage(icon,1080,96,64,64);}
  return c;}
 function canvasTainted(c){try{c.toDataURL();return false;}catch(e){return true;}}
 function loadOptionalImage(src,done){if(!src)return done(null);const im=new Image();im.onload=()=>done(im);im.onerror=()=>done(null);im.src=src;}
 let preparedCard=null;
-function primeCard(){if(!lastResult)return;preparedCard={endImg:null,icon:null};
+function primeCard(){if(!lastResult)return;const pc=preparedCard={endImg:null,icon:null,pending:2,waiters:[]};const fin=()=>{if(--pc.pending<=0){const w=pc.waiters.splice(0);w.forEach(f=>f());}};
  const endName=endingArtName(lastResult.ending);
  const endSrc=ART_AVAILABLE.indexOf(endName)>=0?"assets/img/"+endName:null;
  const iconName=lastResult.collected&&EP.collectible&&EP.collectible.sprite?EP.collectible.sprite+".png":null;
- loadOptionalImage(endSrc,im=>{if(preparedCard)preparedCard.endImg=im;});
- loadOptionalImage(iconName?"assets/img/"+iconName:null,im=>{if(preparedCard)preparedCard.icon=im;});}
+ loadOptionalImage(endSrc,im=>{pc.endImg=im;fin();});
+ loadOptionalImage(iconName?"assets/img/"+iconName:null,im=>{pc.icon=im;fin();});}
+// Wait (max 3 s) for the frame and the ending art so an early tap still gets a card with art.
+function cardWhenReady(fn){let done=false;const go=()=>{if(!done){done=true;fn();}};setTimeout(go,3000);
+ const fr=$("resultFrameImg");const frameP=new Promise(r=>{if(!fr||!fr.getAttribute("src")||fr.complete)return r();fr.addEventListener("load",r,{once:true});fr.addEventListener("error",r,{once:true});});
+ const artP=new Promise(r=>{const pc=preparedCard;if(!pc||pc.pending<=0)return r();pc.waiters.push(r);});
+ Promise.all([frameP,artP]).then(go);}
 function buildCardSync(){const frameEl=$("resultFrameImg");
  const frameOk=frameEl&&frameEl.complete&&frameEl.naturalWidth>0&&!frameEl.dataset.failed?frameEl:null;
  const endName=endingArtName(lastResult.ending);
@@ -787,7 +860,8 @@ function showCardSheet(blob){let sheet=$("cardSave");
  sheet.querySelector("#cardSaveImg").src=url;
  sheet.querySelector("#cardSaveMsg").textContent=url?"If the file doesn't download, long-press the card to save it.":"Couldn't build the result card.";
  return url;}
-function downloadCard(){if(!lastResult)return;
+function downloadCard(){if(!lastResult)return;cardWhenReady(downloadCardNow);}
+function downloadCardNow(){if(!lastResult)return;
  // Blob URL, not a data: link: a data: download can navigate an in-app browser off the game.
  // The click targets a hidden iframe, so a webview that ignores `download` stays on this page.
  const c=buildCardSync();const name="trapfull-"+lastResult.ep+"-"+lastResult.seed+".png";
@@ -822,8 +896,8 @@ function showTitle(){weekLock=false;screen("title");const n=newestReal();const b
  if(n){const ep=EPISODES[n.id];const tips=Object.assign({},GLOBAL_TIPS,ep.tips||{});
   const b=document.createElement("b");b.textContent="Weekly code tip (Ep "+ep.week+")";box.appendChild(b);box.appendChild(document.createElement("br"));
   box.appendChild(document.createTextNode(tips[ep.codeTip]||""));
-  const want=params.get("ep");const playId=want&&EPISODES[want]?want:n.id;const run=!DEBUG&&loadRun(playId);
-  $("btnWeek").textContent=want&&EPISODES[want]?(run?"Continue: ":"Play: ")+"Ep "+EPISODES[want].week+": "+EPISODES[want].title:(run?"Continue this week's call":"This week's call");}}
+  const want=params.get("ep");const playId=want&&canPlay(want)?want:n.id;const run=!DEBUG&&loadRun(playId);
+  $("btnWeek").textContent=want&&canPlay(want)?(run?"Continue: ":"Play: ")+"Ep "+EPISODES[want].week+": "+EPISODES[want].title:(run?"Continue this week's call":"This week's call");}}
 function showSelect(){screen("select");const g=$("epGrid");g.innerHTML="";const newest=newestReal();
  episodeList().forEach(e=>{const ep=EPISODES[e.id];const run=!DEBUG&&loadRun(e.id);const best=bestOf(e.id);const found=endingsFound(e.id).length;const N=Object.keys(ep.endings||{}).length;
   const hasCol=!!ep.collectible;const col=hasCol?(shelf()[ep.collectible.id]?"✔":"—"):"—";
@@ -848,7 +922,7 @@ function showSelect(){screen("select");const g=$("epGrid");g.innerHTML="";const 
    nn.onclick=()=>{started=true;unlockAudio();startEpisode(e.id,true);};bt.appendChild(nn);}
   d.appendChild(bt);g.appendChild(d);});}
 function startWeek(){if(!booted||weekLock)return;if(started&&$("overlay").classList.contains("is-hidden"))return;weekLock=true;started=true;unlockAudio();
- const want=params.get("ep");const id=want&&EPISODES[want]?want:(newestReal()&&newestReal().id);if(id)startEpisode(id,!!DEBUG);}
+ const want=params.get("ep");const id=want&&canPlay(want)?want:(newestReal()&&newestReal().id);if(id)startEpisode(id,!!DEBUG);}
 function openSelect(){if(!booted)return;started=true;unlockAudio();
  if(st&&EP&&!$("app").classList.contains("is-hidden")){clockTick();saveRun();clockStop();}showSelect();}
 function setMuteIcon(){document.querySelectorAll(".muteBtn").forEach(b=>{b.textContent=META.muted?"🔇":"🔊";});}
@@ -868,6 +942,7 @@ document.addEventListener("keydown",e=>{
  if(!$("overlay").classList.contains("is-hidden")){if(e.key==="Enter"||e.key===" "){const ae=document.activeElement;if(ae&&ae.closest&&ae.closest("#btnSelect,.muteBtn"))return;e.preventDefault();startWeek();}return;}
  if(!$("select").classList.contains("is-hidden")){if(e.key==="Escape")showTitle();return;}
  if(!st||!sceneById[st.scene])return;
+ if(pepperActive)return;// pepper experiment: the minigame owns the keyboard while its overlay is open
  const n=parseInt(e.key,10);if(n>=1&&n<=5&&!sceneById[st.scene].end){const b=$("choices").children[n-1];if(b)b.click();}
  if(e.key==="Enter"){if($("toast").style.display==="block")showNextToast();else if($("panelContinue"))$("panelContinue").click();}});
 const frameImg=$("resultFrameImg");if(frameImg)frameImg.addEventListener("error",()=>{frameImg.dataset.failed="1";});
@@ -997,6 +1072,7 @@ function loadEpisodes(done){const dev=params.get("dev")==="1";
  const list=(window.EPISODES_INDEX||[]).filter(e=>e.file&&(dev||!e.stub));let left=list.length;if(!left)return done();
  list.forEach(e=>{const s=document.createElement("script");s.src=e.file;s.onload=s.onerror=()=>{if(--left===0)done();};document.head.appendChild(s);});}
 loadMeta();registerBuiltinEp00();
+if(PEPPER){const s=document.createElement("script");s.src="experiments/pepper-pipe/pepper-run.js";document.head.appendChild(s);}
 loadEpisodes(()=>{migrateV2();loadMeta();setMuteIcon();booted=true;
  if(VERIFY){const which=params.get("ep")||"ep00";const r=verify(which);window.__TRAP_FULL_VERIFY__=r;
   const pre=document.createElement("pre");pre.id="verifyOut";pre.textContent=JSON.stringify(r,null,1);
