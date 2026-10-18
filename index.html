@@ -77,6 +77,9 @@ button:focus-visible{outline:3px solid var(--good);outline-offset:2px}
 .end li{margin-bottom:4px}
 .big{min-height:48px;width:100%;margin-top:8px;border-radius:8px;border:1px solid var(--line);background:var(--good);color:#12100c;font-weight:700;font-size:1rem;cursor:pointer}
 .big.alt{background:#2a2318;color:var(--ink)}
+a.big{display:flex;align-items:center;justify-content:center;box-sizing:border-box;text-decoration:none;text-align:center}
+.big.merch{background:var(--warn);color:#12100c;min-height:52px;letter-spacing:.02em;box-shadow:inset 0 -3px 0 rgba(0,0,0,.25)}
+.followLink{display:block;width:max-content;max-width:100%;margin:8px auto 0;padding:12px 16px;min-height:44px;box-sizing:border-box;color:var(--warn);font-size:.9rem;text-align:center;text-decoration:underline;text-underline-offset:3px}
 #overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:rgba(10,8,6,.95);z-index:30;padding:24px;text-align:center;cursor:pointer}
 #overlay h1{font-size:clamp(2.5rem,12vw,4.5rem);color:var(--good);letter-spacing:.05em}
 #overlay p{color:var(--muted)}
@@ -164,6 +167,8 @@ body.panelOpen #app{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 <script>
 "use strict";
 const GAME_URL="https://jimmdunc-hub.github.io/trap-full/";
+const MERCH_LINK="https://jimmdunc-hub.github.io/links/?utm_source=trapfull";
+const FOLLOW_LINK="https://x.com/Pipe_petin";
 // Art: list files here once they exist in assets/img/ (empty = CSS stage, no network requests)
 const ART_AVAILABLE=["bg_truck.png","bg_bath_cabinet.png","bg_tub.png","bg_party.png","card_endPro.png","card_endNote.png","card_endKevin.png","card_endBlowout.png","card_endPepper.png","card_endYogurt.png","card_endHandyman.png","prop_dale_card_large.png"];
 // Audio: list names once files exist in assets/sfx|music/ (empty = synthesized fallback beeps)
@@ -709,6 +714,9 @@ function renderEnd(sc){
  const box=$("choices");
  const mk=(t,cls,fn,id)=>{const b=document.createElement("button");b.type="button";b.className="big"+(cls?" "+cls:"");b.textContent=t;if(id)b.id=id;b.onclick=fn;box.appendChild(b);return b;};
  mk("Download result card","",downloadCard,"dlCard");
+ // merch links: page buttons only, never drawn into the downloaded card image
+ const ml=(t,cls,id,href)=>{const a=document.createElement("a");a.href=href;a.target="_blank";a.rel="noopener";a.className=cls;a.id=id;a.textContent=t;box.appendChild(a);return a;};
+ ml("Get the Merch","big merch","merchBtn",MERCH_LINK);ml("Follow Pipe Petin","followLink","followLink",FOLLOW_LINK);
  mk("Copy text","alt",copyResult,"copyText");
  mk("Share on X","alt",()=>shareEnding(EP.id==="ep00"?'I got the "'+sc.tag+'" ending in TRAP FULL. Kevin says hi. 🌶️🔧':'I got the "'+sc.tag+'" ending in TRAP FULL Ep '+EP.week+": "+EP.title+". Score "+R.score+"."),"shareX");
  mk("Replay","alt",()=>startEpisode(EP.id,true),"replay");
