@@ -48,6 +48,7 @@ header h1{font-size:1.1rem;letter-spacing:.08em;color:var(--good);flex:1}
 #stage.art.cleanwater #water{background:url(assets/img/water_overlay.png) 0 0/100% 400% repeat-x,rgba(70,130,190,.25);filter:hue-rotate(110deg) saturate(.55);opacity:.55}
 #stage .who.low{top:auto;bottom:6px}
 #ov{position:absolute;display:none;background-size:100% 100%;image-rendering:pixelated;pointer-events:none}
+#decor{position:absolute;inset:0;pointer-events:none}#decor .dc{position:absolute;background-repeat:no-repeat;image-rendering:pixelated}#decor .dc.anim{animation:p2 1.2s steps(2) infinite}
 body.toastPad{padding-bottom:var(--toastH,0px)}
 .spr{position:absolute;bottom:4%;image-rendering:pixelated;background-repeat:no-repeat;background-size:auto 100%}
 #pete{left:6%;width:15%;aspect-ratio:48/64;background-image:url(assets/img/pete_idle.png);background-size:200% 100%;animation:p2 1.6s steps(2) infinite}
@@ -168,7 +169,7 @@ body.panelOpen #app{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
     <div><img src="assets/img/icon_rep.png" alt=""><span id="lR">Reputation</span><div class="bar" id="mR"><i></i></div></div>
     <div><img src="assets/img/icon_patience.png" alt=""><span id="lT">Patience</span><div class="bar" id="mT"><i></i></div></div>
   </div>
-  <div id="stage"><div id="ov" aria-hidden="true"></div><div id="water"></div><div id="pipe"></div><div id="pete" class="spr"></div><div id="rhonda" class="spr"></div><div id="dale" class="spr"></div><div id="prop" class="spr"></div><div id="dcardSpr" class="spr"></div><div id="kevin"></div><div id="endtip"></div><span id="stageLabel"></span><span class="who" id="who"></span></div>
+  <div id="stage"><div id="ov" aria-hidden="true"></div><div id="decor" aria-hidden="true"></div><div id="water"></div><div id="pipe"></div><div id="pete" class="spr"></div><div id="rhonda" class="spr"></div><div id="dale" class="spr"></div><div id="prop" class="spr"></div><div id="dcardSpr" class="spr"></div><div id="kevin"></div><div id="endtip"></div><span id="stageLabel"></span><span class="who" id="who"></span></div>
   <div class="card" id="text"></div>
   <div id="choices"></div>
   <footer id="foot"></footer>
@@ -386,11 +387,17 @@ function useEpisode(id){
 function showStub(){return params.get("dev")==="1";}
 // Release gating: an episode is listed, playable and featured once its release date (YYYY-MM-DD) is today or earlier
 // in the player's local date. ?dev=1 shows unreleased ones; ?today=YYYY-MM-DD (or window.TRAP_TODAY, set only by the
-// private test build) overrides the date for QA.
+// private test build) overrides the date for QA. A release may also carry a time and UTC offset (see isReleased).
 function todayStr(){const ok=v=>{if(typeof v!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;const [y,m,d]=v.split("-").map(Number);const t=new Date(Date.UTC(y,m-1,d));return t.getUTCFullYear()===y&&t.getUTCMonth()===m-1&&t.getUTCDate()===d;};const q=params.get("today");if(ok(q))return q;if(ok(window.TRAP_TODAY))return window.TRAP_TODAY;
  const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function isReleased(id){const ep=epOf(id);if(!ep)return false;const ix=(window.EPISODES_INDEX||[]).find(e=>e.id===id);const rel=(ix&&ix.release)||ep.release||"";
- return !/^\d{4}-\d{2}-\d{2}$/.test(rel)||rel<=todayStr();}
+ if(/^\d{4}-\d{2}-\d{2}$/.test(rel))return rel<=todayStr();
+ // Timed gate: "YYYY-MM-DDTHH:MM[:SS](Z|±HH:MM)", e.g. "2026-10-31T08:00-05:00". An exact instant, the same for every player.
+ // ?now=<same format> overrides the clock for QA; a ?today= / TRAP_TODAY date override opens it for that whole day.
+ const RX=/^(\d{4}-\d{2}-\d{2})T\d{2}:\d{2}(:\d{2})?(Z|[+-]\d{2}:\d{2})$/;const m=RX.exec(rel);if(!m)return !rel;const at=Date.parse(rel);if(!isFinite(at))return false;
+ const nq=params.get("now");if(nq&&RX.test(nq)&&isFinite(Date.parse(nq)))return Date.parse(nq)>=at;
+ const tq=params.get("today");if((tq&&/^\d{4}-\d{2}-\d{2}$/.test(tq))||typeof window.TRAP_TODAY==="string")return m[1]<=todayStr();
+ return Date.now()>=at;}
 function canPlay(id){return !!epOf(id)&&(showStub()||(isReleased(id)&&!epOf(id).stub));}
 function episodeList(){
  const index=window.EPISODES_INDEX||[],seen={},rows=[];
@@ -504,13 +511,14 @@ function enterScene(st,id,ev){
    for(const k of ["P","R","T"])if(p.effects&&p.effects[k])st[k]=clamp(st[k]+p.effects[k]);
    st.total++;st.correct++;if(p.tip){st.tipsRight.push(p.tip);ev.push({type:"tip",tip:p.tip});}}
   if(sc.onEnter)sc.onEnter.forEach(f=>st.flags[f]=true);
+  if(sc.shake)ev.push({type:"shake"}); // written jump-scare beat: one screen shake on entry, never timed
   if(sc.drift&&!st.flags.mainOff){st.P=clamp(st.P+(EP.driftAmount||5));ev.push({type:"drift"});
    if(st.P>=100&&EP.failEnding){id=EP.failEnding;continue;}}
   if(sc.enterTip){ev.push({type:"tip",tip:sc.enterTip});if(sc.enterTipRecap&&st.seenTips.indexOf(sc.enterTip)<0)st.seenTips.push(sc.enterTip);}
   const slot=(EP.events||[]).filter(e=>e.at&&e.at.indexOf(id)>=0&&!st.flags["ev_"+e.id]);
   if(slot.length&&!ev.some(x=>x.type==="event")){
    for(let i=0;i<slot.length;i++){const e=slot[i];st.flags["ev_"+e.id]=true;
-    if(rng(st)<e.chance){for(const k of ["P","R","T"])if(e.effects&&e.effects[k])st[k]=clamp(st[k]+e.effects[k]);
+    if((st.forceEv&&st.forceEv.indexOf(e.id)>=0)||rng(st)<e.chance){for(const k of ["P","R","T"])if(e.effects&&e.effects[k])st[k]=clamp(st[k]+e.effects[k]);(e.setFlags||[]).forEach(f=>st.flags[f]=true);if(e.shake)ev.push({type:"shake"});
      ev.push({type:"event",text:e.text});if(e.tip){st.tipsRight.push(e.tip);ev.push({type:"tip",tip:e.tip});}break;}}}
   if(st.P>=100&&EP.failEnding){id=EP.failEnding;continue;}
   const pl=EP.patienceLeave;if(pl&&st.T<=pl.at&&!st.flags[pl.flag]){st.flags[pl.flag]=true;ev.push({type:"note",text:pl.text});}
@@ -723,8 +731,16 @@ function drawStage(sc){
  const dl=S.dale?S.dale[pid]:null;const de=$("dale");
  if(de){if(art&&dl&&!sc.end){de.style.display="block";de.style.backgroundImage="url(assets/img/"+dl+".png)";}else de.style.display="none";}
  const spritesOn=art&&!sc.end&&(!!pr||!!dl||ne.style.display==="block"||k.style.display==="block");stage.classList.toggle("tallart",!hasBg&&spritesOn);stage.classList.toggle("endcard",!!sc.end&&hasBg);
- stage.classList.toggle("cleanwater",S.water==="clean");const ovd=art&&!sc.end&&S.overlays?S.overlays[st.scene]:null;const ove=$("ov");
- if(ovd){ove.style.display="block";ove.style.backgroundImage="url(assets/img/"+ovd[0]+")";ove.style.left=(ovd[1]/320*100)+"%";ove.style.top=(ovd[2]/180*100)+"%";ove.style.width=(ovd[3]/320*100)+"%";ove.style.height=(ovd[4]/180*100)+"%";}else ove.style.display="none";
+ stage.classList.toggle("cleanwater",S.water==="clean");let ovd=art&&!sc.end&&S.overlays&&Object.hasOwn(S.overlays,st.scene)?S.overlays[st.scene]:null;const ove=$("ov");
+ // overlay: [file,x,y,w,h] or [file,x,y,w,h,frame,frames] (one frame of a horizontal strip), or {variants:[{if,ov}],ov} picked by flags/meters
+ if(ovd&&!Array.isArray(ovd)){let pick=ovd.ov||null;(ovd.variants||[]).some(v=>{if(meets(v.if,st)){pick=v.ov;return true;}return false;});ovd=pick;}
+ if(ovd){ove.style.display="block";ove.style.backgroundImage="url(assets/img/"+ovd[0]+")";const ofn=ovd[6]>1?ovd[6]:1,ofr=Math.max(0,Math.min(ofn-1,ovd[5]|0));ove.style.backgroundSize=(ofn*100)+"% 100%";ove.style.backgroundPosition=(ofn>1?ofr/(ofn-1)*100:0)+"% 0";ove.style.left=(ovd[1]/320*100)+"%";ove.style.top=(ovd[2]/180*100)+"%";ove.style.width=(ovd[3]/320*100)+"%";ove.style.height=(ovd[4]/180*100)+"%";}else ove.style.display="none";
+ // decor: stage.decor[scene] = list of [file,x,y,w,h,frame,frames] (frame -1 on a 2-frame strip animates) or {if,ov}; extra set dressing behind the cast
+ const dce=$("decor");if(dce){dce.innerHTML="";const dl2=art&&!sc.end&&S.decor&&Object.hasOwn(S.decor,st.scene)?S.decor[st.scene]:[];
+  (Array.isArray(dl2)?dl2:[]).forEach(d=>{if(d&&!Array.isArray(d)){if(!meets(d.if,st))return;d=d.ov;}if(!Array.isArray(d))return;
+   const el=document.createElement("div");el.className="dc";const fn=d[6]>1?d[6]:1,fr=d[5]|0;el.style.backgroundImage="url(assets/img/"+d[0]+")";el.style.backgroundSize=(fn*100)+"% 100%";
+   if(fn===2&&fr<0)el.classList.add("anim");else el.style.backgroundPosition=(fn>1?Math.max(0,Math.min(fn-1,fr))/(fn-1)*100:0)+"% 0";
+   el.style.left=(d[1]/320*100)+"%";el.style.top=(d[2]/180*100)+"%";el.style.width=(d[3]/320*100)+"%";el.style.height=(d[4]/180*100)+"%";dce.appendChild(el);});}
  $("who").classList.toggle("low",!sc.end&&(!!ovd||(S.whoLow||[]).indexOf(sc.bg)>=0));
  const ps=st.panel?sceneById[st.panel]:sc;const ptxt=ps&&(ps.entryPanel&&st.panel?ps.entryPanel.text:panelText(ps,ps))||"";
  const dc=$("dcardSpr");
@@ -734,6 +750,9 @@ function drawStage(sc){
  let img=stage.querySelector("img.bg");
  if(hasBg){if(!img){img=document.createElement("img");img.className="bg";img.alt="";img.onerror=function(){const f=(img.getAttribute("src")||"").split("/").pop();const ix=ART_AVAILABLE.indexOf(f);if(ix>=0)ART_AVAILABLE.splice(ix,1);img.remove();};stage.insertBefore(img,stage.firstChild);}if(img.getAttribute("src")!=="assets/img/"+file)img.src="assets/img/"+file;}
  else if(img)img.remove();
+ // bg strips: stage.bgFrames[bg]=n (n frames side by side); stage.bgFrame[scene]=frame or {if,frame}
+ if(img){const bn=!sc.end&&S.bgFrames?S.bgFrames[sc.bg]|0:0;if(bn>1){let f=0;const bf=S.bgFrame?S.bgFrame[st.scene]:null;if(typeof bf==="number")f=bf;else if(bf&&meets(bf.if,st))f=bf.frame|0;f=Math.max(0,Math.min(bn-1,f));
+  img.style.width=(bn*100)+"%";img.style.objectFit="fill";img.style.left=(-f*100)+"%";img.style.right="auto";}else{img.style.width="";img.style.objectFit="";img.style.left="";img.style.right="";}}
 }
 function drawFoot(){if(!st||!EP)return;const secs=Math.round(((st.elapsedMs||0)+(st.penaltyMs||0))/1000);
  $("foot").textContent="Ep "+EP.week+" · "+fmtTime(secs)+" · P "+st.P+" · R "+st.R+" · T "+st.T+" · Endings "+endingsFound().length+"/"+ENDINGS.length;
@@ -762,7 +781,7 @@ function render(){
   if(!ok){b.classList.add("locked");b.setAttribute("aria-disabled","true");b.onclick=()=>playSfx("choice_locked");}
   else b.onclick=()=>choose(i);box.appendChild(b);});}
 function present(ev){const msgs=[];ev.forEach(e=>{
- if(e.type==="delta"&&(Math.abs(e.dP)>=10||e.dR<=-8))shake();
+ if((e.type==="delta"&&(Math.abs(e.dP)>=10||e.dR<=-8))||e.type==="shake")shake();
  if(e.type==="tip"){msgs.push('<img class="toasticon" src="assets/img/tip_badge.png" alt=""><b>Pete says:</b> '+(TIPS[e.tip]||""));setTimeout(()=>playSfx("tip_ding"),150);}
  if(e.type==="note"||e.type==="event")msgs.push(sub(e.text));
  if(e.type==="drift"){msgs.push(sub(EP.driftText||"(+Pressure)"));playSfx("gurgle_small");}});
@@ -1100,10 +1119,14 @@ function verify(id){if(!epOf(id))return {ep:id,ok:false,error:"not loaded"};useE
  function stepChoice(s,i){const sc=sceneById[s.scene];if(!sc||!sc.choices||!sc.choices[i])return false;s.panel=null;applyChoice(s,sc.choices[i],[],i);return noteState(s);}
  // Full plays with different preferences record endings without blocking the beam.
  // The beam then keeps a spread of states per scene so one early branch cannot use up the cap.
- function playPolicy(pick){const s=freshState("VERIFY1");enterScene(s,s.scene,[]);mark(s);
+ function playPolicy(pick,forceEv){const s=freshState("VERIFY1");if(forceEv)s.forceEv=forceEv;enterScene(s,s.scene,[]);mark(s);
   for(let n=0;n<40;n++){const sc=sceneById[s.scene];if(!sc||sc.end)break;const opts=avail(s,sc);if(!opts.length)break;
    const i=pick(opts,sc,s,n);s.panel=null;applyChoice(s,sc.choices[i],[],i);mark(s);}}
  playPolicy(opts=>opts[0]);
+ // Optional per-episode scripted runs (verify.playScripts: arrays of choice indices, one per decision; unavailable picks fall back to the first option).
+ // An entry may also be {picks:[...],forceEvents:["ev_id"]} to fire those random events on that run.
+ (Array.isArray(V.playScripts)?V.playScripts:[]).forEach(scr=>{const pk=Array.isArray(scr)?scr:(scr&&Array.isArray(scr.picks)?scr.picks:null);if(!pk)return;
+  const fe=!Array.isArray(scr)&&Array.isArray(scr.forceEvents)?scr.forceEvents.filter(x=>typeof x==="string"):null;playPolicy((opts,sc,s,n)=>{const w=pk[n];return opts.indexOf(w)>=0?w:opts[0];},fe);});
  playPolicy(opts=>opts[opts.length-1]);
  playPolicy(opts=>opts[Math.min(1,opts.length-1)]);
  playPolicy((opts,sc)=>opts.slice().sort((a,b)=>((sc.choices[b].hack||sc.choices[b].hackIf)?1:0)-((sc.choices[a].hack||sc.choices[a].hackIf)?1:0)||b-a)[0]);

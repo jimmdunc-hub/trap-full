@@ -7,5 +7,6 @@ window.EPISODES_INDEX=[
  {id:"ep00",file:"episodes/ep00.js",title:"Trap Full",week:0,release:"2026-10-16"},
  {id:"ep01",file:"episodes/ep01.js",title:"It's Just a Hose Bib",week:1,release:"2026-10-16"},
  {id:"ep02",file:"episodes/ep02.js",title:"Under the Slab",week:2,release:"2026-10-18"},
+ {id:"ep03",file:"episodes/ep03.js",title:"Mystery Leak",week:3,release:"2026-10-23T08:00-05:00"},
  {id:"ep99",file:"episodes/ep99.js",title:"Framework Stub",week:99,release:"2099-01-01",stub:true}
 ];
