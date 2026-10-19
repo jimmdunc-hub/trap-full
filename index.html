@@ -101,6 +101,8 @@ footer{font-size:.7rem;color:var(--muted);text-align:center;margin-top:auto}
 .is-hidden{display:none!important}
 #overlay{cursor:default;overflow:auto}
 #overlay .tap{cursor:pointer}
+#challengeBanner{max-width:400px;width:100%;box-sizing:border-box;background:#3a1d14;border:2px solid var(--warn);border-radius:10px;padding:10px 12px;color:var(--ink);font-size:.95rem;line-height:1.35}#challengeBanner b{color:var(--warn);font-size:1.1rem}
+.badgeCard{margin:10px auto 0;max-width:420px;text-align:center;background:#2a2318;border:2px solid var(--good);border-radius:10px;padding:10px;color:var(--ink);font-size:.9rem}
 #codeTip{max-width:400px;width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:.88rem;line-height:1.4;color:var(--ink)}
 #codeTip b{color:var(--warn)}
 #overlay .big,#select .big{max-width:400px}
@@ -144,6 +146,7 @@ body.panelOpen #app{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
   <img id="logo" src="assets/img/logo_trapfull.png" alt="TRAP FULL">
   <h1 id="logoText" style="display:none">TRAP FULL</h1>
   <p>Pipe Petin — Plumbing and peppers</p>
+  <div id="challengeBanner" class="is-hidden" role="status"></div>
   <div id="codeTip"></div>
   <div class="tap" id="tapHint">TAP TO START</div>
   <button type="button" class="big" id="btnWeek">This week's call</button>
@@ -179,6 +182,20 @@ body.panelOpen #app{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 const GAME_URL="https://jimmdunc-hub.github.io/trap-full/";
 const MERCH_LINK="https://jimmdunc-hub.github.io/links/?utm_source=trapfull";
 const FOLLOW_LINK="https://x.com/Pipe_petin";
+// ---------- growth: analytics, per-ending merch, challenge links, endings tracker ----------
+// Cookieless analytics. Set to your GoatCounter count URL, e.g. "https://<code>.goatcounter.com/count".
+// Empty = nothing is ever sent. Never sent with ?dev=1, ?verify=1 or ?debug=1. No cookies, no personal data.
+const ANALYTICS_ENDPOINT="";
+// Ending -> sticker product (Shopify handles, mapped only where the product clearly matches). Others use MERCH_LINK.
+const STORE_PRODUCT_BASE="https://petinplumbco.myshopify.com/products/";
+const MERCH_PRODUCTS={
+ endKevin:"pixel-drain-machine-sticker-retro-plumber-tool-art-1",      // "snake it": drain machine
+ e1_pro:"pixel-two-handle-faucet-sticker-retro-plumber-tool-art-1",     // "faucet's new"
+ e2_hotspring:"pixel-water-heater-sticker-retro-plumber-tool-art-1",    // hot-water line leak
+ e2_righthole:"pixel-rotary-hammer-sticker-retro-plumber-tool-art-1",   // chipping the slab
+ e2_wronghole:"pixel-rotary-hammer-sticker-retro-plumber-tool-art-1"};  // chipping the (wrong) slab spot
+// Certified Apprentice badge reward: placeholder only (no discount code). Set later, e.g. {text:"...",url:"..."}.
+const APPRENTICE_REWARD=null;
 // Art: list files here once they exist in assets/img/ (empty = CSS stage, no network requests)
 const ART_AVAILABLE=["bg_truck.png","bg_bath_cabinet.png","bg_tub.png","bg_party.png","card_endPro.png","card_endNote.png","card_endKevin.png","card_endBlowout.png","card_endPepper.png","card_endYogurt.png","card_endHandyman.png","prop_dale_card_large.png"];
 // Audio: list names once files exist in assets/sfx|music/ (empty = synthesized fallback beeps)
@@ -353,11 +370,13 @@ endYogurt:{end:true,tag:"The Receipt",good:true,text:"Dale signs the invoice. Yo
 // Ep 0's scenes stay in this file (const scenes / GLOBAL_TIPS) until episodes/ep00.js
 // is added to episodes/index.js. That file's registerEpisode() replaces the built-in.
 const EPISODES={};
+function hasEp(id){return typeof id==="string"&&Object.hasOwn(EPISODES,id);}
+function epOf(id){return hasEp(id)?EPISODES[id]:undefined;}
 // ep.art: extra filenames in assets/img/ that this episode ships (added to ART_AVAILABLE).
-window.registerEpisode=function(ep){if(ep&&typeof ep.id==="string"){EPISODES[ep.id]=ep;(Array.isArray(ep.art)?ep.art:[]).forEach(f=>{if(typeof f==="string"&&/^[\w.-]+\.png$/.test(f)&&ART_AVAILABLE.indexOf(f)<0)ART_AVAILABLE.push(f);});}};
+window.registerEpisode=function(ep){if(ep&&typeof ep.id==="string"&&/^[a-z0-9_]{1,32}$/.test(ep.id)){EPISODES[ep.id]=ep;(Array.isArray(ep.art)?ep.art:[]).forEach(f=>{if(typeof f==="string"&&/^[\w.-]+\.png$/.test(f)&&ART_AVAILABLE.indexOf(f)<0)ART_AVAILABLE.push(f);});}};
 let EP=null,sceneById={},TIPS={},ENDINGS=[];
 function useEpisode(id){
- EP=EPISODES[id];
+ EP=epOf(id);
  sceneById=Object.assign({},EP.scenes||{},EP.endings||{});
  TIPS=Object.assign({},GLOBAL_TIPS,EP.tips||{});
  ENDINGS=Object.keys(EP.endings||{});
@@ -370,17 +389,17 @@ function showStub(){return params.get("dev")==="1";}
 // private test build) overrides the date for QA.
 function todayStr(){const ok=v=>{if(typeof v!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;const [y,m,d]=v.split("-").map(Number);const t=new Date(Date.UTC(y,m-1,d));return t.getUTCFullYear()===y&&t.getUTCMonth()===m-1&&t.getUTCDate()===d;};const q=params.get("today");if(ok(q))return q;if(ok(window.TRAP_TODAY))return window.TRAP_TODAY;
  const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
-function isReleased(id){const ep=EPISODES[id];if(!ep)return false;const ix=(window.EPISODES_INDEX||[]).find(e=>e.id===id);const rel=(ix&&ix.release)||ep.release||"";
+function isReleased(id){const ep=epOf(id);if(!ep)return false;const ix=(window.EPISODES_INDEX||[]).find(e=>e.id===id);const rel=(ix&&ix.release)||ep.release||"";
  return !/^\d{4}-\d{2}-\d{2}$/.test(rel)||rel<=todayStr();}
-function canPlay(id){return !!EPISODES[id]&&(showStub()||(isReleased(id)&&!EPISODES[id].stub));}
+function canPlay(id){return !!epOf(id)&&(showStub()||(isReleased(id)&&!epOf(id).stub));}
 function episodeList(){
  const index=window.EPISODES_INDEX||[],seen={},rows=[];
  index.forEach(e=>{
-  if(!EPISODES[e.id])return;const ep=EPISODES[e.id];seen[e.id]=1;if(ep.stub&&!showStub())return;if(!isReleased(e.id)&&!showStub())return;
+  if(!epOf(e.id))return;const ep=epOf(e.id);seen[e.id]=1;if(ep.stub&&!showStub())return;if(!isReleased(e.id)&&!showStub())return;
   rows.push({id:e.id,title:ep.title,week:ep.week,release:e.release||ep.release||""});
  });
  Object.keys(EPISODES).forEach(id=>{
-  if(seen[id])return;const ep=EPISODES[id];if(ep.stub&&!showStub())return;if(!isReleased(id)&&!showStub())return;
+  if(seen[id])return;const ep=epOf(id);if(ep.stub&&!showStub())return;if(!isReleased(id)&&!showStub())return;
   rows.push({id:id,title:ep.title,week:ep.week,release:ep.release||""});
  });
  rows.sort((a,b)=>b.week-a.week||(a.id<b.id?-1:1));
@@ -388,7 +407,7 @@ function episodeList(){
 }
 function newestReal(){
  const all=episodeList();
- for(let i=0;i<all.length;i++)if(!EPISODES[all[i].id].stub&&isReleased(all[i].id))return all[i];
+ for(let i=0;i<all.length;i++)if(!epOf(all[i].id).stub&&isReleased(all[i].id))return all[i];
  return all[0]||null;
 }
 function registerBuiltinEp00(){
@@ -547,6 +566,19 @@ function lsDel(k){try{localStorage.removeItem(k)}catch(e){}}
 function jget(k,d){try{const v=JSON.parse(lsGet(k));return v===null||v===undefined?d:v}catch(e){return d}}
 function today(){try{return new Date().toISOString().slice(0,10)}catch(e){return ""}}
 const params=new URLSearchParams(location.search);const DEBUG=params.get("debug")==="1";const VERIFY=params.get("verify")==="1";
+function merchUrl(endId){const id=String(endId||""),h=Object.prototype.hasOwnProperty.call(MERCH_PRODUCTS,id)?MERCH_PRODUCTS[id]:"";
+ const base=h?STORE_PRODUCT_BASE+h+"?utm_source=trapfull":MERCH_LINK;return base+(base.indexOf("?")<0?"?":"&")+"utm_content="+encodeURIComponent(id);}
+window.__trapEvents=[];// local event log (QA); only sent when ANALYTICS_ENDPOINT is set
+function analyticsOn(){return !!ANALYTICS_ENDPOINT&&/^https:\/\//.test(ANALYTICS_ENDPOINT)&&params.get("dev")!=="1"&&!VERIFY&&!DEBUG;}
+function track(name,id){const ev={name:String(name),id:id?String(id):""};window.__trapEvents.push(ev);if(!analyticsOn())return;
+ try{const path="/event/"+ev.name+(ev.id?"/"+ev.id:"");
+  const u=ANALYTICS_ENDPOINT+"?p="+encodeURIComponent(path)+"&t="+encodeURIComponent(ev.name)+"&e=true&rnd="+Math.random().toString(36).slice(2);
+  if(navigator.sendBeacon)navigator.sendBeacon(u);else{const i=new Image();i.referrerPolicy="no-referrer";i.src=u;}}catch(e){}}
+// Challenge link: ?ep=<id>&beat=<score>[&seed=<seed>]. Junk or unplayable values are ignored.
+let CHALLENGE=null;
+function challengeFromQuery(){const ep=params.get("ep"),b=params.get("beat");if(!ep||b===null||!/^[0-9]{1,6}$/.test(b))return null;
+ const n=parseInt(b,10);if(!(n>0))return null;if(!hasEp(ep)||!canPlay(ep)||epOf(ep).stub)return null;return {ep:ep,beat:n,seed:seedFromQuery()};}
+function challengeUrl(R){return GAME_URL+"?ep="+encodeURIComponent(R.ep)+"&seed="+encodeURIComponent(R.seed)+"&beat="+Math.max(0,Math.round(R.score));}
 // EXPERIMENT (pepper-pipe pitch A): ?pepper=1 turns the Ep2 van run (e2_06, the Boy fetches; e2_07 is the return) into the Pepper Run minigame.
 // Without the flag none of this runs and experiments/pepper-pipe/pepper-run.js is never requested. Off in verify.
 const PEPPER=params.get("pepper")!=="0"&&!VERIFY;/* launch: on by default, ?pepper=0 turns it off */const PEPPER_HOOK={ep:"ep02",scene:"e2_06",choice:0};let pepperAdj=null,pepperActive=false,pepperTok=0;
@@ -556,7 +588,22 @@ const K={meta:"trapfull.v3.meta",shelf:"trapfull.v3.shelf",run:id=>"trapfull.v3.
 let META={schema:1,lastEpisode:null,muted:false,played:{}};
 function loadMeta(){const m=jget(K.meta,null);if(m&&typeof m==="object"&&m.schema===1)META=m;if(!META.played||typeof META.played!=="object")META.played={};}
 function saveMeta(){lsSet(K.meta,JSON.stringify(META));}
-function endingsFound(id){const ep=EPISODES[id||(EP&&EP.id)];const a=jget(K.endings(id||(EP&&EP.id)),[]);
+// Endings tracker (all episodes) beside the per-episode saves. Migrates from trapfull.v3.<ep>.endings on first load.
+K.tracker="trapfull.v3.tracker";
+function localDate(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+const isDay=v=>typeof v==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(v);
+function loadTracker(){let t=jget(K.tracker,null);if(t&&t.found&&typeof t.found==="object")t.found=Object.assign({},...Object.keys(t.found).filter(hasEp).map(k=>({[k]:t.found[k]})));if(!t||typeof t!=="object"||t.schema!==1||!t.found||typeof t.found!=="object"||Array.isArray(t.found))t={schema:1,found:{},badges:{}};
+ if(!t.badges||typeof t.badges!=="object"||Array.isArray(t.badges))t.badges={};
+ Object.keys(EPISODES).forEach(id=>{const ep=epOf(id);const f=Object.hasOwn(t.found,id)&&t.found[id]&&typeof t.found[id]==="object"&&!Array.isArray(t.found[id])?t.found[id]:{};
+  Object.keys(f).forEach(k=>{if(!ep.endings||!Object.hasOwn(ep.endings,k))delete f[k];else if(!isDay(f[k]))f[k]=null;});
+  endingsFound(id).forEach(k=>{if(ep.endings&&Object.hasOwn(ep.endings,k)&&!Object.hasOwn(f,k))f[k]=null;});t.found[id]=f;});return t;}
+function saveTracker(t){if(DEBUG||VERIFY)return;lsSet(K.tracker,JSON.stringify(t));}
+function releasedEndingIds(){const out=[];Object.keys(EPISODES).forEach(id=>{const ep=epOf(id);if(ep.stub||!isReleased(id))return;Object.keys(ep.endings||{}).forEach(k=>out.push(id+"/"+k));});return out;}
+function trackerStats(t){t=t||loadTracker();const all=releasedEndingIds();const got=all.filter(x=>{const [e,k]=x.split("/");return Object.hasOwn(t.found,e)&&Object.hasOwn(t.found[e],k);});return {found:got.length,total:all.length,badge:t.badges.certifiedApprentice||null};}
+function recordEnding(epId,endId){const t=loadTracker();if(!Object.hasOwn(t.found,epId))t.found[epId]={};if(!isDay(t.found[epId][endId]))t.found[epId][endId]=localDate();
+ const s=trackerStats(t);let earned=false;if(s.total>0&&s.found>=s.total&&!t.badges.certifiedApprentice){t.badges.certifiedApprentice={date:localDate(),of:s.total};earned=true;}
+ saveTracker(t);return earned;}
+function endingsFound(id){const ep=epOf(id||(EP&&EP.id));const a=jget(K.endings(id||(EP&&EP.id)),[]);
  return Array.isArray(a)?a.filter((x,i,b)=>ep&&ep.endings&&ep.endings[x]&&b.indexOf(x)===i):[];}
 function bestOf(id){const b=jget(K.best(id),null);return b&&typeof b.score==="number"&&isFinite(b.score)?b:null;}
 function shelf(){const s=jget(K.shelf,{});return s&&typeof s==="object"&&!Array.isArray(s)?s:{};}
@@ -572,7 +619,7 @@ function validRun(o,ep){if(!o||!ep)return false;const all=Object.assign({},ep.sc
  if(typeof o.seed!=="string")return false;
  const tips=Object.assign({},GLOBAL_TIPS,ep.tips||{});
  if(o.tipsWrong.concat(o.tipsRight,o.hackTips,o.seenTips).some(t=>!tips[t]))return false;return true;}
-function loadRun(id){const o=normalizeRun(jget(K.run(id),null));if(!o)return null;if(!validRun(o,EPISODES[id])){lsDel(K.run(id));return null;}return o;}
+function loadRun(id){const o=normalizeRun(jget(K.run(id),null));if(!o)return null;if(!validRun(o,epOf(id))){lsDel(K.run(id));return null;}return o;}
 function saveRun(){if(DEBUG||VERIFY||!st||!EP)return;const sc=sceneById[st.scene];if(!sc||sc.end){lsDel(K.run(EP.id));return;}
  lsSet(K.run(EP.id),JSON.stringify(Object.assign({schema:1,ep:EP.id},st)));}
 function migrateV2(){
@@ -732,10 +779,10 @@ function choose(i,pr){const sc=sceneById[st.scene];let c=sc&&sc.choices&&sc.choi
  saveRun();render();window.scrollTo(0,0);}
 function endSting(){const s2=sceneById[st.scene];if(s2&&s2.end)playSfx(s2.fail||st.scene==="endBlowout"?"blowout_burst":s2.good?"sting_good_end":"sting_bad_end");}
 function finishRun(end){const scored=scoreOf(st);let newBest=false;
- if(!DEBUG&&!VERIFY){const f=endingsFound();if(f.indexOf(st.scene)<0){f.push(st.scene);lsSet(K.endings(EP.id),JSON.stringify(f));}
+ let badgeNew=false;if(!DEBUG&&!VERIFY){const f=endingsFound();if(f.indexOf(st.scene)<0){f.push(st.scene);lsSet(K.endings(EP.id),JSON.stringify(f));}badgeNew=recordEnding(EP.id,st.scene);track("ending",EP.id+"/"+st.scene);
   const b=bestOf(EP.id);if(!b||scored.score>b.score){newBest=true;lsSet(K.best(EP.id),JSON.stringify({score:scored.score,timeMs:(st.elapsedMs||0)+(st.penaltyMs||0),ending:st.scene,date:today()}));}
   if(st.collected&&EP.collectible){const sh=shelf();if(!sh[EP.collectible.id]){sh[EP.collectible.id]={ep:EP.id,date:today()};lsSet(K.shelf,JSON.stringify(sh));}}}
- lastResult={ep:EP.id,week:EP.week,title:EP.title,ending:st.scene,tag:end.tag,correct:st.correct,total:st.total,score:scored.score,secs:scored.secs,seed:st.seed,collected:!!st.collected,newBest:newBest};}
+ lastResult={ep:EP.id,week:EP.week,title:EP.title,ending:st.scene,tag:end.tag,correct:st.correct,total:st.total,score:scored.score,secs:scored.secs,seed:st.seed,collected:!!st.collected,newBest:newBest,badgeNew:badgeNew};}
 function renderEnd(sc){
  if(!lastResult||lastResult.ending!==st.scene||lastResult.seed!==st.seed){const r=scoreOf(st);lastResult={ep:EP.id,week:EP.week,title:EP.title,ending:st.scene,tag:sc.tag,correct:st.correct,total:st.total,score:r.score,secs:r.secs,seed:st.seed,collected:!!st.collected,newBest:false};}
  const R=lastResult;
@@ -752,18 +799,23 @@ function renderEnd(sc){
  rec.push("<li><b>"+(sc.endTip||"")+"</b></li>");
  let text=sc.text||"";if(sc.variants)for(let i=0;i<sc.variants.length;i++)if(meets(sc.variants[i].if,st)){text=sc.variants[i].text;break;}
  const col=EP.collectible?'<span>'+EP.collectible.name+" <b>"+(R.collected?"✔ found":"—")+"</b></span>":"";
- $("text").innerHTML='<div class="end"><h2>'+sc.tag+"</h2>"+(sc.cardTitle?'<p style="color:var(--warn);font-weight:700">'+sc.cardTitle+"</p>":"")+"<p>"+sub(text)+"</p>"+(sc.whyLicensed?'<p class="why"><b>Why hire licensed:</b> '+sc.whyLicensed+"</p>":"")+'<div class="stats"><span>Correct calls <b>'+R.correct+"/"+R.total+'</b></span><span>Score <b>'+R.score+"</b>"+(R.newBest?" <i>New best!</i>":"")+'</span><span>Time <b>'+fmtTime(R.secs)+'</b></span><span>Seed <b>'+R.seed+"</b></span>"+col+'</div><h3>Pro Tips from tonight</h3><ul>'+rec.join("")+"</ul></div>";
+ $("text").innerHTML='<div class="end"><h2>'+sc.tag+"</h2>"+(sc.cardTitle?'<p style="color:var(--warn);font-weight:700">'+sc.cardTitle+"</p>":"")+"<p>"+sub(text)+"</p>"+(sc.whyLicensed?'<p class="why"><b>Why hire licensed:</b> '+sc.whyLicensed+"</p>":"")+'<div class="stats"><span>Correct calls <b>'+R.correct+"/"+R.total+'</b></span><span>Score <b>'+R.score+"</b>"+(R.newBest?" <i>New best!</i>":"")+'</span>'+(CHALLENGE&&CHALLENGE.ep===R.ep?'<span>Challenge <b>'+(R.score>CHALLENGE.beat?'Beat '+CHALLENGE.beat+'!':'Short of '+CHALLENGE.beat+' by '+(CHALLENGE.beat-R.score))+'</b></span>':'')+'<span>Time <b>'+fmtTime(R.secs)+'</b></span><span>Seed <b>'+R.seed+"</b></span>"+col+'</div><h3>Pro Tips from tonight</h3><ul>'+rec.join("")+"</ul></div>";
  const box=$("choices");
  const mk=(t,cls,fn,id)=>{const b=document.createElement("button");b.type="button";b.className="big"+(cls?" "+cls:"");b.textContent=t;if(id)b.id=id;b.onclick=fn;box.appendChild(b);return b;};
- mk("Download result card","",downloadCard,"dlCard");
+ mk("Share score card","",shareCard,"shareCard");
+ mk("Download result card","alt",downloadCard,"dlCard");
  // merch links: page buttons only, never drawn into the downloaded card image
  const ml=(t,cls,id,href)=>{const a=document.createElement("a");a.href=href;a.target="_blank";a.rel="noopener";a.className=cls;a.id=id;a.textContent=t;box.appendChild(a);return a;};
- ml("Get the Merch","big merch","merchBtn",MERCH_LINK);ml("Follow Pipe Petin","followLink","followLink",FOLLOW_LINK);
+ ml("Get the Merch","big merch","merchBtn",merchUrl(st.scene)).addEventListener("click",()=>track("merch",st.scene));ml("Follow Pipe Petin","followLink","followLink",FOLLOW_LINK);
+ mk("Challenge a friend","alt",shareChallenge,"challengeBtn");
  mk("Copy text","alt",copyResult,"copyText");
  mk("Share on X","alt",()=>shareEnding(EP.id==="ep00"?'I got the "'+sc.tag+'" ending in TRAP FULL. Kevin says hi. 🌶️🔧':'I got the "'+sc.tag+'" ending in TRAP FULL Ep '+EP.week+": "+EP.title+". Score "+R.score+"."),"shareX");
  mk("Replay","alt",()=>startEpisode(EP.id,true),"replay");
  mk("Episode select","alt",()=>openSelect(),"toSelect");
  const cnt=document.createElement("div");cnt.className="cnt";cnt.textContent="Endings found: "+endingsFound().length+"/"+ENDINGS.length;box.appendChild(cnt);
+ if(!DEBUG&&!VERIFY){const ts=trackerStats();const tr=document.createElement("div");tr.className="cnt tracker";tr.id="trackerLine";
+  tr.textContent="All released episodes: "+ts.found+"/"+ts.total+" endings"+(ts.badge?" · 🏅 Certified Apprentice":" · find them all to earn Certified Apprentice");box.appendChild(tr);
+  if(ts.badge){const bd=document.createElement("div");bd.className="badgeCard";bd.id="apprenticeBadge";bd.innerHTML="<b>🏅 Certified Apprentice</b><br>"+(R.badgeNew?"New! ":"")+"Every released ending found"+(isDay(ts.badge.date)?" ("+ts.badge.date+").":".")+(APPRENTICE_REWARD&&APPRENTICE_REWARD.text?" "+APPRENTICE_REWARD.text:" Reward: coming soon.");box.appendChild(bd);}}
  primeCard();}
 function resultText(){const R=lastResult;return "TRAP FULL Ep "+R.week+": "+R.title+" — "+R.tag+". Correct calls "+R.correct+"/"+R.total+", score "+R.score+", time "+fmtTime(R.secs)+", seed "+R.seed+". "+GAME_URL;}
 function copyResult(){const t=resultText();const done=()=>toast("Copied.");
@@ -780,7 +832,8 @@ function paintCardLines(g,x,y,maxW){const R=lastResult;const title="Ep "+R.week+
  const col=R.collected&&EP.collectible?"    ✔ "+EP.collectible.name:"";
  g.fillText("Time "+fmtTime(R.secs)+"    Seed "+R.seed+col,x,y+148);
  g.fillStyle="#a89878";g.font="20px sans-serif";
- const tip="Code tip: "+(TIPS[EP.codeTip]||"");wrapText(g,tip,x,y+188,maxW,26,2);}
+ const tip="Code tip: "+(TIPS[EP.codeTip]||"");wrapText(g,tip,x,y+188,maxW,26,2);
+ g.fillStyle="#d7c07a";g.font="22px sans-serif";g.fillText("Endings found "+endingsFound().length+"/"+ENDINGS.length+"   ·   Play free: jimmdunc-hub.github.io/trap-full",x,y+290);}
 function wrapText(g,text,x,y,maxW,lineH,maxLines){const words=String(text).split(" ");let line="",n=0;
  for(let i=0;i<words.length;i++){const t=line?line+" "+words[i]:words[i];
   if(g.measureText(t).width>maxW&&line){g.fillText(n===maxLines-1?line+"…":line,x,y);y+=lineH;n++;line=words[i];if(n>=maxLines)return;}
@@ -801,7 +854,7 @@ function paintFramedCard(g,icon){const R=lastResult;
  g.fillText("Time "+fmtTime(R.secs),x,332);g.fillText("Seed "+R.seed,x,372);
  if(R.collected&&EP.collectible){g.fillStyle="#d7c07a";g.font="20px sans-serif";g.fillText("✔ "+EP.collectible.name,x,404);if(icon)g.drawImage(icon,1100,372,44,44);}
  g.fillStyle="#d7c07a";g.font="19px sans-serif";wrapText(g,"Code tip: "+(TIPS[EP.codeTip]||""),52,474,1092,25,3);
- g.fillStyle="#a89878";g.font="20px sans-serif";g.fillText("Play the episode and find all "+ENDINGS.length+" endings.",52,606);}
+ g.fillStyle="#a89878";g.font="20px sans-serif";g.fillText("Endings found "+endingsFound().length+"/"+ENDINGS.length+"   ·   Play free: jimmdunc-hub.github.io/trap-full",52,606);}
 function renderCard(frame,endingArt,icon){const c=document.createElement("canvas");c.width=1200;c.height=675;const g=c.getContext("2d");g.imageSmoothingEnabled=false;
  if(frame){const W=cardWindow();g.fillStyle="#12100c";g.fillRect(W.x,W.y,W.w,W.h);
   if(endingArt){const iw=endingArt.naturalWidth||endingArt.width,ih=endingArt.naturalHeight||endingArt.height;
@@ -870,7 +923,16 @@ function downloadCardNow(){if(!lastResult)return;
  try{let frame=$("cardDownloadFrame");
   if(!frame){frame=document.createElement("iframe");frame.id="cardDownloadFrame";frame.name="cardDownloadFrame";frame.title="";frame.setAttribute("aria-hidden","true");frame.tabIndex=-1;frame.style.cssText="position:fixed;width:0;height:0;border:0;opacity:0;pointer-events:none";document.body.appendChild(frame);}
   const a=document.createElement("a");a.href=url;a.download=name;a.target="cardDownloadFrame";a.rel="noopener";document.body.appendChild(a);a.click();a.remove();}catch(e){}}
-function shareEnding(endingText){const text=String(endingText||"")+" "+GAME_URL;
+function shareCard(){if(!lastResult)return;track("share","card/"+lastResult.ending);cardWhenReady(()=>{const c=buildCardSync();const blob=pngBlob(c);
+ const name="trapfull-"+lastResult.ep+"-"+lastResult.seed+".png";let file=null;try{file=blob?new File([blob],name,{type:"image/png"}):null;}catch(e){file=null;}
+ const text='I got "'+lastResult.tag+'" in TRAP FULL. Score '+lastResult.score+". Beat it:";
+ if(file&&navigator.canShare&&navigator.share){let ok=false;try{ok=navigator.canShare({files:[file]});}catch(e){ok=false;}
+  if(ok){navigator.share({files:[file],title:"TRAP FULL",text:text,url:challengeUrl(lastResult)}).then(()=>{window.__lastShare="files";}).catch(e=>{if(!e||e.name!=="AbortError")downloadCardNow();});return;}}
+ window.__lastShare="download";downloadCardNow();});}
+function shareChallenge(){if(!lastResult)return;const url=challengeUrl(lastResult);const text="Beat my "+lastResult.score+" on this call in TRAP FULL:";track("share","challenge/"+lastResult.ending);window.__lastChallengeUrl=url;
+ if(navigator.share){navigator.share({title:"TRAP FULL challenge",text:text,url:url}).catch(e=>{if(!e||e.name!=="AbortError")copyLink();});return;}copyLink();
+ function copyLink(){const done=()=>toast("Challenge link copied.");if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(url).then(done,()=>toast("Send this link: "+url,8000));else toast("Send this link: "+url,8000);}}
+function shareEnding(endingText,kind){track("share",(kind||"x")+"/"+(lastResult?lastResult.ending:""));const text=String(endingText||"")+" "+GAME_URL;
  const url="https://x.com/intent/post?text="+encodeURIComponent(text);
  if(navigator.share){navigator.share({text:String(endingText||""),url:GAME_URL}).catch(e=>{if(e&&e.name!=="AbortError")openOnce(url,text);});return url;}
  openOnce(url,text);return url;}
@@ -879,7 +941,7 @@ function openOnce(url,text){let ok=false;try{const a=document.createElement("a")
 window.shareEnding=shareEnding;
 
 // ---------- screens ----------
-function startEpisode(id,fresh){if(!EPISODES[id])return;
+function startEpisode(id,fresh){if(!epOf(id))return;
  if(st&&EP&&EP.id!==id){clockTick();saveRun();}
  clockStop();clearToasts();lastResult=null;useEpisode(id);
  if(fresh&&!DEBUG)lsDel(K.run(id));
@@ -891,15 +953,15 @@ function startEpisode(id,fresh){if(!EPISODES[id])return;
    if(params.get("dalehacks")!==null)st.dalehacks=Math.max(0,parseInt(params.get("dalehacks"),10)||0);}
   const want=params.get("scene");const ev=[];const sc0=DEBUG&&sceneById[want]&&!sceneById[want].end?want:st.scene;
   enterScene(st,sc0,ev);present(ev);}
- META.played[id]=true;META.lastEpisode=id;saveMeta();saveRun();screen("game");clockStart();render();}
+ META.played[id]=true;META.lastEpisode=id;saveMeta();saveRun();screen("game");clockStart();render();if(!DEBUG&&!VERIFY)track("play",id);}
 function showTitle(){weekLock=false;screen("title");const n=newestReal();const box=$("codeTip");box.textContent="";
- if(n){const ep=EPISODES[n.id];const tips=Object.assign({},GLOBAL_TIPS,ep.tips||{});
+ if(n){const ep=epOf(n.id);const tips=Object.assign({},GLOBAL_TIPS,ep.tips||{});
   const b=document.createElement("b");b.textContent="Weekly code tip (Ep "+ep.week+")";box.appendChild(b);box.appendChild(document.createElement("br"));
   box.appendChild(document.createTextNode(tips[ep.codeTip]||""));
   const want=params.get("ep");const playId=want&&canPlay(want)?want:n.id;const run=!DEBUG&&loadRun(playId);
-  $("btnWeek").textContent=want&&canPlay(want)?(run?"Continue: ":"Play: ")+"Ep "+EPISODES[want].week+": "+EPISODES[want].title:(run?"Continue this week's call":"This week's call");}}
+  $("btnWeek").textContent=want&&canPlay(want)?(run?"Continue: ":"Play: ")+"Ep "+epOf(want).week+": "+epOf(want).title:(run?"Continue this week's call":"This week's call");}}
 function showSelect(){screen("select");const g=$("epGrid");g.innerHTML="";const newest=newestReal();
- episodeList().forEach(e=>{const ep=EPISODES[e.id];const run=!DEBUG&&loadRun(e.id);const best=bestOf(e.id);const found=endingsFound(e.id).length;const N=Object.keys(ep.endings||{}).length;
+ episodeList().forEach(e=>{const ep=epOf(e.id);const run=!DEBUG&&loadRun(e.id);const best=bestOf(e.id);const found=endingsFound(e.id).length;const N=Object.keys(ep.endings||{}).length;
   const hasCol=!!ep.collectible;const col=hasCol?(shelf()[ep.collectible.id]?"✔":"—"):"—";
   const d=document.createElement("div");d.className="epcard";d.dataset.ep=e.id;
   const base=ep.thumb?String(ep.thumb).split("/").pop():"";
@@ -922,7 +984,7 @@ function showSelect(){screen("select");const g=$("epGrid");g.innerHTML="";const 
    nn.onclick=()=>{started=true;unlockAudio();startEpisode(e.id,true);};bt.appendChild(nn);}
   d.appendChild(bt);g.appendChild(d);});}
 function startWeek(){if(!booted||weekLock)return;if(started&&$("overlay").classList.contains("is-hidden"))return;weekLock=true;started=true;unlockAudio();
- const want=params.get("ep");const id=want&&canPlay(want)?want:(newestReal()&&newestReal().id);if(id)startEpisode(id,!!DEBUG);}
+ const want=params.get("ep");const id=want&&canPlay(want)?want:(newestReal()&&newestReal().id);if(id)startEpisode(id,!!DEBUG||!!(CHALLENGE&&CHALLENGE.seed&&CHALLENGE.ep===id));}
 function openSelect(){if(!booted)return;started=true;unlockAudio();
  if(st&&EP&&!$("app").classList.contains("is-hidden")){clockTick();saveRun();clockStop();}showSelect();}
 function setMuteIcon(){document.querySelectorAll(".muteBtn").forEach(b=>{b.textContent=META.muted?"🔇":"🔊";});}
@@ -951,7 +1013,7 @@ const logo=$("logo");if(logo)logo.addEventListener("error",()=>{logo.style.displ
 // ---------- validator (?verify=1&ep=<id>) ----------
 const LICENSED_KEYWORDS=["gas","water heater","backflow","sewer","vent","permit","in the wall"];
 const BRAND_BANNED=/Petin Plumbing Co(mpany|\.|\b)/i;
-function verify(id){if(!EPISODES[id])return {ep:id,ok:false,error:"not loaded"};useEpisode(id);const V=EP.verify||{};const missing=[];
+function verify(id){if(!epOf(id))return {ep:id,ok:false,error:"not loaded"};useEpisode(id);const V=EP.verify||{};const missing=[];
  const schemaOk=EP.schema===1&&typeof EP.title==="string"&&typeof EP.week==="number"&&EP.start&&EP.start.scene&&EP.scenes&&EP.endings&&Array.isArray(EP.resolve);
  if(!sceneById[EP.start.scene])missing.push("start->"+(EP.start&&EP.start.scene));
  Object.keys(sceneById).forEach(k=>{const sc=sceneById[k];
@@ -1078,6 +1140,8 @@ loadEpisodes(()=>{migrateV2();loadMeta();setMuteIcon();booted=true;
   const pre=document.createElement("pre");pre.id="verifyOut";pre.textContent=JSON.stringify(r,null,1);
   pre.style.cssText="position:fixed;inset:0;z-index:80;margin:0;overflow:auto;background:#12100c;color:#d7c07a;padding:12px;font:12px/1.45 ui-monospace,monospace";
   document.body.appendChild(pre);return;}
+ CHALLENGE=challengeFromQuery();if(CHALLENGE){const bn=$("challengeBanner");const ep=epOf(CHALLENGE.ep);bn.innerHTML="";const bb=document.createElement("b");bb.textContent="Beat "+CHALLENGE.beat+" on this call";bn.appendChild(bb);bn.appendChild(document.createElement("br"));
+  bn.appendChild(document.createTextNode("A friend challenged you: Ep "+ep.week+": "+ep.title+(CHALLENGE.seed?" · same call (seed "+CHALLENGE.seed+")":"")));bn.classList.remove("is-hidden");track("challenge_opened",CHALLENGE.ep);}
  showTitle();});
 window.__TRAP={get episodes(){return EPISODES;},get state(){return st;},get result(){return lastResult;},scoreOf:scoreOf,seedToState:seedToState};
 </script>
