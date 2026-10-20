@@ -141,6 +141,7 @@ body.panelOpen #app{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 #cardSave p{max-width:22rem;text-align:center}
 #cardSave .big{max-width:22rem}
 </style>
+<script data-goatcounter="https://petinplumbco.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </head>
 <body>
 <div id="overlay">
@@ -578,10 +579,14 @@ function merchUrl(endId){const id=String(endId||""),h=Object.prototype.hasOwnPro
  const base=h?STORE_PRODUCT_BASE+h+"?utm_source=trapfull":MERCH_LINK;return base+(base.indexOf("?")<0?"?":"&")+"utm_content="+encodeURIComponent(id);}
 window.__trapEvents=[];// local event log (QA); only sent when ANALYTICS_ENDPOINT is set
 function analyticsOn(){return !!ANALYTICS_ENDPOINT&&/^https:\/\//.test(ANALYTICS_ENDPOINT)&&params.get("dev")!=="1"&&!VERIFY&&!DEBUG;}
-function track(name,id){const ev={name:String(name),id:id?String(id):""};window.__trapEvents.push(ev);if(!analyticsOn())return;
+function track(name,id){const ev={name:String(name),id:id?String(id):""};window.__trapEvents.push(ev);gcEvent(ev);if(!analyticsOn())return;
  try{const path="/event/"+ev.name+(ev.id?"/"+ev.id:"");
   const u=ANALYTICS_ENDPOINT+"?p="+encodeURIComponent(path)+"&t="+encodeURIComponent(ev.name)+"&e=true&rnd="+Math.random().toString(36).slice(2);
   if(navigator.sendBeacon)navigator.sendBeacon(u);else{const i=new Image();i.referrerPolicy="no-referrer";i.src=u;}}catch(e){}}
+// GoatCounter events (plays, endings, merch clicks). Skipped in dev/verify/debug; a blocked or missing script is a no-op.
+const GC_EVENTS=["play","ending","merch"];
+function gcEvent(ev){if(GC_EVENTS.indexOf(ev.name)<0||params.get("dev")==="1"||VERIFY||DEBUG)return;
+ try{const gc=window.goatcounter;if(gc&&typeof gc.count==="function")gc.count({path:ev.name+(ev.id?"/"+ev.id:""),title:ev.name+(ev.id?": "+ev.id:""),event:true});}catch(e){}}
 // Challenge link: ?ep=<id>&beat=<score>[&seed=<seed>]. Junk or unplayable values are ignored.
 let CHALLENGE=null;
 function challengeFromQuery(){const ep=params.get("ep"),b=params.get("beat");if(!ep||b===null||!/^[0-9]{1,6}$/.test(b))return null;
