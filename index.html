@@ -48,7 +48,7 @@ header h1{font-size:1.1rem;letter-spacing:.08em;color:var(--good);flex:1}
 #stage.art.cleanwater #water{background:url(assets/img/water_overlay.png) 0 0/100% 400% repeat-x,rgba(70,130,190,.25);filter:hue-rotate(110deg) saturate(.55);opacity:.55}
 #stage .who.low{top:auto;bottom:6px}
 #ov{position:absolute;display:none;background-size:100% 100%;image-rendering:pixelated;pointer-events:none}
-#decor{position:absolute;inset:0;pointer-events:none}#decor .dc{position:absolute;background-repeat:no-repeat;image-rendering:pixelated}#decor .dc.anim{animation:p2 1.2s steps(2) infinite}
+#decor{position:absolute;inset:0;pointer-events:none}#decor .dc{position:absolute;background-repeat:no-repeat;image-rendering:pixelated}#decor .dc.anim{animation:p2 1.2s steps(2) infinite}#decor .dc.anim4{animation:p4 .8s steps(4) infinite}
 body.toastPad{padding-bottom:var(--toastH,0px)}
 .spr{position:absolute;bottom:4%;image-rendering:pixelated;background-repeat:no-repeat;background-size:auto 100%}
 #pete{left:6%;width:15%;aspect-ratio:48/64;background-image:url(assets/img/pete_idle.png);background-size:200% 100%;animation:p2 1.6s steps(2) infinite}
@@ -103,6 +103,7 @@ footer{font-size:.7rem;color:var(--muted);text-align:center;margin-top:auto}
 #overlay{cursor:default;overflow:auto}
 #overlay .tap{cursor:pointer}
 #challengeBanner{max-width:400px;width:100%;box-sizing:border-box;background:#3a1d14;border:2px solid var(--warn);border-radius:10px;padding:10px 12px;color:var(--ink);font-size:.95rem;line-height:1.35}#challengeBanner b{color:var(--warn);font-size:1.1rem}
+.santoStamp{float:right;transform:rotate(-8deg);border:3px double #e8b04a;color:#e8b04a;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:2px 8px;border-radius:6px;margin:0 0 6px 8px}.santoChip{display:inline-block;background:#2a2318;border:1px solid #e8b04a;color:#e8b04a;border-radius:8px;padding:0 6px;font-size:.85em}
 .badgeCard{margin:10px auto 0;max-width:420px;text-align:center;background:#2a2318;border:2px solid var(--good);border-radius:10px;padding:10px;color:var(--ink);font-size:.9rem}
 #codeTip{max-width:400px;width:100%;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:.88rem;line-height:1.4;color:var(--ink)}
 #codeTip b{color:var(--warn)}
@@ -488,7 +489,7 @@ const clamp=v=>Math.max(0,Math.min(100,v));
 function cmp(val,expr){const m=/^(>=|<=|>|<|==)?\s*(-?\d+)$/.exec(String(expr));if(!m)return false;const op=m[1]||"==",n=+m[2];
  return op===">="?val>=n:op==="<="?val<=n:op===">"?val>n:op==="<"?val<n:val===n;}
 function meets(req,st){if(!req)return true;
- for(const k of ["P","R","T","dalehacks"])if(req[k]!==undefined&&!cmp(k==="dalehacks"?(st.dalehacks||0):st[k],req[k]))return false;
+ for(const k of ["P","R","T","dalehacks"])if(req[k]!==undefined&&!cmp(k==="dalehacks"?(st.dalehacks||0):st[k]-((st.bless&&st.bless[k])||0),req[k]))return false;// El Santo: gates never see the blessing
  if(req.flags&&!req.flags.every(f=>st.flags[f]))return false;
  if(req.notFlags&&req.notFlags.some(f=>st.flags[f]))return false;
  if(req.any&&!req.any.some(r=>meets(r,st)))return false;return true;}
@@ -502,18 +503,28 @@ const SEED_CHARS="ABCDEFGHIJKLMNOPQRSTUVWXYZ23456789";
 function newSeed(){let s="";for(let i=0;i<6;i++)s+=SEED_CHARS[Math.floor(Math.random()*SEED_CHARS.length)];return s;}
 function seedFromQuery(){const q=(params.get("seed")||"").toUpperCase();return /^[A-Z2-9]{6}$/.test(q)?q:null;}
 function cloneSt(s){return {ep:s.ep,scene:s.scene,P:s.P,R:s.R,T:s.T,flags:Object.assign({},s.flags||{}),history:(s.history||[]).slice(),
- correct:s.correct||0,total:s.total||0,tipsWrong:(s.tipsWrong||[]).slice(),tipsRight:(s.tipsRight||[]).slice(),dalehacks:s.dalehacks||0,
+ correct:s.correct||0,total:s.total||0,tipsWrong:(s.tipsWrong||[]).slice(),tipsRight:(s.tipsRight||[]).slice(),dalehacks:s.dalehacks||0,bless:s.bless&&typeof s.bless==="object"?Object.assign({},s.bless):undefined,
  hackTips:(s.hackTips||[]).slice(),seenTips:(s.seenTips||[]).slice(),panel:s.panel||null,seed:s.seed||"AAAAAA",
  rngState:typeof s.rngState==="number"?s.rngState:seedToState(s.seed||"AAAAAA"),elapsedMs:s.elapsedMs||0,penaltyMs:s.penaltyMs||0,collected:!!s.collected};}
 function hackLimit(){if(typeof EP.hackThreshold==="number")return EP.hackThreshold;const h=EP.hackChain;if(h&&typeof h==="object"&&typeof h.threshold==="number")return h.threshold;return 3;}
 function hackPanel(){const h=EP.hackChain;if(!h)return null;return typeof h==="string"?h:(h.panel||null);}
 function freshState(seed){const S=EP.start||{};return cloneSt({ep:EP.id,scene:S.scene,P:S.P,R:S.R,T:S.T,flags:Object.assign({},S.flags||{}),seed:seed,rngState:seedToState(seed)});}
+// El Santo de Petin random event (design/el-santo-random-event-scope.md, Piquin approved Nov 1 2026). Opt-in per episode: EP.santo={chance,meter:"R"|"T",amount,after?:[sceneIds],text}.
+// Rolled once per run, on the first do-it-right choice (correct:true, not a hack) with zero Dale hacks so far. Own seeded stream (seed+"|santo"), so the run RNG and every other roll are untouched.
+// The blessing is tracked in st.bless and subtracted in meets(), so it never unlocks or blocks an ending, gate or secret. He fixes nothing. Force with forceEv "santo" or ?dev=1&santo=1.
+// Meter change that keeps the blessing exact through clamps: st[k]-st.bless[k] always equals the unblessed run's meter.
+function addM(st,k,d){const b=st.bless&&st.bless[k];if(b){const u=clamp(st[k]-b+d);st[k]=clamp(st[k]+d);st.bless[k]=st[k]-u;}else st[k]=clamp(st[k]+d);}
+function santoRoll(st,c,correct,isHack,ev){const S=EP.santo;if(!S||st.flags.santoRolled||correct!==true||isHack||(st.dalehacks||0)>0)return;if(S.after&&S.after.indexOf(st.scene)<0)return;
+ st.flags.santoRolled=true;const forced=!!st.forceEv&&st.forceEv.indexOf("santo")>=0;const r={rngState:seedToState(String(st.seed)+"|santo")};
+ if(!(forced||rng(r)<(S.chance===undefined?0.07:S.chance)))return;const m=S.meter==="T"?"T":"R",b=st[m];st[m]=clamp(st[m]+(S.amount||3));
+ st.bless=st.bless||{};st.bless[m]=(st.bless[m]||0)+(st[m]-b);st.flags.blessed=true;
+ ev.push({type:"santo",text:(S.text||"El Santo de Petin")+' <span class="santoChip">'+((EP.chipLabels&&EP.chipLabels[m])||(m==="T"?"Patience":"Rep"))+" ▲</span>"});}
 function enterScene(st,id,ev){
  for(let guard=0;guard<8;guard++){
   st.scene=id;const sc=sceneById[id];if(!sc||sc.end)return;
   if(sc.panelOnly){st.panel=id;id=sc.next;continue;}
   if(sc.entryPanel&&!st.flags["panel_"+id]){const p=sc.entryPanel;st.flags["panel_"+id]=true;st.panel=id;
-   for(const k of ["P","R","T"])if(p.effects&&p.effects[k])st[k]=clamp(st[k]+p.effects[k]);
+   for(const k of ["P","R","T"])if(p.effects&&p.effects[k])addM(st,k,p.effects[k]);
    st.total++;st.correct++;if(p.tip){st.tipsRight.push(p.tip);ev.push({type:"tip",tip:p.tip});}}
   if(sc.onEnter)sc.onEnter.forEach(f=>st.flags[f]=true);
   if(sc.shake)ev.push({type:"shake"}); // written jump-scare beat: one screen shake on entry, never timed
@@ -525,10 +536,10 @@ function enterScene(st,id,ev){
    // verify playScripts: when a run forces an event at this scene, only forced events fire here (no roll for the others)
    const forcedHere=!!st.forceEv&&slot.some(e=>st.forceEv.indexOf(e.id)>=0);
    for(let i=0;i<slot.length;i++){const e=slot[i];st.flags["ev_"+e.id]=true;
-    if(forcedHere?st.forceEv.indexOf(e.id)>=0:rng(st)<e.chance){for(const k of ["P","R","T"])if(e.effects&&e.effects[k])st[k]=clamp(st[k]+e.effects[k]);(e.setFlags||[]).forEach(f=>st.flags[f]=true);if(e.shake)ev.push({type:"shake"});
+    if(forcedHere?st.forceEv.indexOf(e.id)>=0:rng(st)<e.chance){for(const k of ["P","R","T"])if(e.effects&&e.effects[k])addM(st,k,e.effects[k]);(e.setFlags||[]).forEach(f=>st.flags[f]=true);if(e.shake)ev.push({type:"shake"});
      ev.push({type:"event",text:e.text});if(e.tip){st.tipsRight.push(e.tip);ev.push({type:"tip",tip:e.tip});}break;}}}
   if(st.P>=100&&EP.failEnding){id=EP.failEnding;continue;}
-  const pl=EP.patienceLeave;if(pl&&st.T<=pl.at&&!st.flags[pl.flag]){st.flags[pl.flag]=true;ev.push({type:"note",text:pl.text});}
+  const pl=EP.patienceLeave;if(pl&&st.T-((st.bless&&st.bless.T)||0)<=pl.at&&!st.flags[pl.flag]){st.flags[pl.flag]=true;ev.push({type:"note",text:pl.text});}
   if(sc.forceIf&&meets(sc.forceIf,st)){id=sc.forceIf.to;continue;}
   return;}
 }
@@ -559,7 +570,7 @@ function applyChoice(st,c,ev,idx){
    if(V.pepperHighR){e.R=(e.R||0)+V.pepperHighR;note+=" "+(V.pepperHighNote||"")+"(+"+V.pepperHighR+" Reputation)";}}
   else if(!r.skipped&&r.band==="low"){e.T=(e.T||0)-5;note=(note?note+" ":"")+(r.fell?H.fellText:"")+H.drink+" (−5 Patience)";}
   if(r.fullClear)note=(note?note+" ":"")+"Full clear: +1 to the pepper jar.";}
- for(const k of ["P","R","T"])if(e[k])st[k]=clamp(st[k]+e[k]);
+ for(const k of ["P","R","T"])if(e[k])addM(st,k,e[k]);
  (c.setFlags||[]).forEach(f=>st.flags[f]=true);
  const col=EP.collectible;if(col&&st.scene===col.scene&&idx===col.choice){st.collected=true;ev.push({type:"note",text:"Collected: <b>"+col.name+"</b>"});
   if(!DEBUG&&!VERIFY){const sh=shelf();if(!sh[col.id]){sh[col.id]={ep:EP.id,date:today()};lsSet(K.shelf,JSON.stringify(sh));}}}
@@ -568,12 +579,13 @@ function applyChoice(st,c,ev,idx){
  if(tip){(correct===false?st.tipsWrong:st.tipsRight).push(tip);ev.push({type:"tip",tip:tip});}
  const isHack=c.hack||(c.hackIf&&meets(c.hackIf,st));
  if(isHack){st.dalehacks=(st.dalehacks||0)+1;if(tip)st.hackTips.push(tip);if(c.hackNote)ev.push({type:"note",text:c.hackNote});}
+ santoRoll(st,c,correct,isHack,ev);
  st.history.push(st.scene+":"+c.label);
  ev.push({type:"delta",dP:st.P-before.P,dR:st.R-before.R});
  let next;
  if(st.P>=100&&EP.failEnding)next=EP.failEnding;
  else if(isHack&&hackPanel()&&(st.dalehacks||0)>=hackLimit())next=hackPanel();
- else if(c.next==="resolve"){const cb=EP.resolveCallback;if(cb&&!st.flags[cb.unlessFlag]){st.R=clamp(st.R+cb.R);ev.push({type:"note",text:cb.text});}next=resolveEnding(st);}
+ else if(c.next==="resolve"){const cb=EP.resolveCallback;if(cb&&!st.flags[cb.unlessFlag]){addM(st,"R",cb.R);ev.push({type:"note",text:cb.text});}next=resolveEnding(st);}
  else{next=resolveNext(c.next,st);(EP.redirects||[]).forEach(r=>{if(st.scene===r.from&&next===r.to&&meets(r.if,st))next=r.go;});}
  enterScene(st,next,ev);
 }
@@ -608,8 +620,8 @@ function challengeFromQuery(){const ep=params.get("ep"),b=params.get("beat");if(
 function challengeUrl(R){return GAME_URL+"?ep="+encodeURIComponent(R.ep)+"&seed="+encodeURIComponent(R.seed)+"&beat="+Math.max(0,Math.round(R.score));}
 // Pepper Run van runs: Ep2 e2_06, Ep3 e3_07 and Ep4 e4_07 (see PEPPER_HOOKS) open the minigame; ?pepper=0 turns it off.
 // Without the flag none of this runs and experiments/pepper-pipe/pepper-run.js is never requested. Off in verify.
-const PEPPER=params.get("pepper")!=="0"&&!VERIFY;/* launch: on by default, ?pepper=0 turns it off */// Van-run hooks, one per episode (design/experiments/pepper-run-van-levels.md). Ep2 keeps its shipped rules (rescue = undo the van-run fail).
-// Ep3 (Halloween, e3_07) and Ep4 (steamy alley, e4_07): flavor text plus at most 5 Patience either way, plus +2 Rep on a high score (clear/8) via highR (Director Oct 24); never touches Pressure/time or the van-run roll. Random play and the sims never see the bonus.
+const PEPPER=params.get("pepper")!=="0"&&!VERIFY;const PEPPER_TEST=PEPPER&&params.get("pepper")==="ep5"?"ep05":null;/* launch: on by default, ?pepper=0 turns it off */// Van-run hooks, one per episode (design/experiments/pepper-run-van-levels.md). Ep2 keeps its shipped rules (rescue = undo the van-run fail).
+// Ep3 (Halloween, e3_07), Ep4 (steamy alley, e4_07) and Ep5 (Hold, Please, e5_07): flavor text plus at most 5 Patience either way, plus +2 Rep on a high score (clear/8) via highR (Director Oct 24); never touches Pressure/time or the van-run roll. Random play and the sims never see the bonus.
 const PEPPER_HOOKS={
  ep02:{scene:"e2_06",choice:0,level:"ep02",rescue:true,drink:"...and he hands Pete a second strawberry smoothie. \"For the road.\" Nobody is going anywhere.",fellText:"(He took the hedge shortcut.) "},
  ep03:{scene:"e3_07",choice:0,level:"ep03",rescue:false,highR:true,label:" (Pepper Run 🎃)",
@@ -617,7 +629,10 @@ const PEPPER_HOOKS={
   drink:"...and the Boy comes back holding the skeleton grabber from the neighbor's yard. \"For hard-to-reach places.\" Walt is not amused.",fellText:"(Straight into the leaf pile.) "},
  ep04:{scene:"e4_07",choice:0,level:"ep04",rescue:false,highR:true,label:" (Pepper Run 🌶)",
   high:"Pepper Run {n}/{t}: the Boy dodges the alley water jet and is back with the element tester before Hector finishes his sentence. (+3 Patience)",
-  drink:"...and the Boy comes back soaked from the alley water jet, holding a garage-sale lamp. \"It was a dollar.\" Gloria is not amused.",fellText:"(He found the drain gap.) "}};
+  drink:"...and the Boy comes back soaked from the alley water jet, holding a garage-sale lamp. \"It was a dollar.\" Gloria is not amused.",fellText:"(He found the drain gap.) "},
+ ep05:{scene:"e5_07",choice:0,level:"ep05",rescue:false,highR:true,label:" (Pepper Run 🌶)",
+  high:"Pepper Run {n}/{t}: the Boy makes it back with the crimp tool and the gauge before the hold music loops. (+3 Time to dinner)",
+  drink:"...and the Boy comes back with a cardboard cabinet box \"for the drip.\" Rick is not amused.",fellText:"(Straight into the trench.) "}};
 let pepperAdj=null,pepperActive=false,pepperTok=0;
 function pepperHook(){return PEPPER&&EP&&Object.hasOwn(PEPPER_HOOKS,EP.id)?PEPPER_HOOKS[EP.id]:null;}
 function isPepperChoice(i){const h=pepperHook();return !!h&&st&&st.scene===h.scene&&i===h.choice;}
@@ -749,7 +764,8 @@ function drawStage(sc){
  const pete=spr.pete||{idle:"pete_idle.png",work:"pete_work.png"};
  $("pete").style.display=art&&!sc.end?"block":"none";
  const working=(S.workScenes||[]).indexOf(st.scene)>=0;$("pete").classList.toggle("work",working);
- if(art)$("pete").style.backgroundImage="url(assets/img/"+(working?pete.work:pete.idle)+")";
+ const pph=S.peteScene&&Object.hasOwn(S.peteScene,st.scene)?S.peteScene[st.scene]:null; // Ep5: single-frame phone poses per scene
+ if(art)$("pete").style.backgroundImage="url(assets/img/"+(pph||(working?pete.work:pete.idle))+")";$("pete").style.backgroundSize=pph?"100% 100%":"";$("pete").style.animation=pph?"none":"";
  const npc=S.npc,ne=$("rhonda");
  if(art&&npc&&!sc.end&&npc.scenes.indexOf(st.scene)>=0&&!(npc.hideFlag&&st.flags[npc.hideFlag])){ne.style.display="block";ne.style.backgroundImage="url(assets/img/"+(spr.rhonda||npc.img)+")";}
  else ne.style.display="none";
@@ -760,7 +776,7 @@ function drawStage(sc){
  const dl=S.dale?S.dale[pid]:null;const de=$("dale");
  if(de){if(art&&dl&&!sc.end){de.style.display="block";de.style.backgroundImage="url(assets/img/"+dl+".png)";}else de.style.display="none";}
  const spritesOn=art&&!sc.end&&(!!pr||!!dl||ne.style.display==="block"||k.style.display==="block");stage.classList.toggle("tallart",!hasBg&&spritesOn);stage.classList.toggle("endcard",!!sc.end&&hasBg);
- stage.classList.toggle("cleanwater",S.water==="clean");let ovd=art&&!sc.end&&S.overlays&&Object.hasOwn(S.overlays,st.scene)?S.overlays[st.scene]:null;const ove=$("ov");
+ stage.classList.toggle("cleanwater",S.water==="clean");let ovd=art&&!sc.end&&S.overlays&&Object.hasOwn(S.overlays,st.scene)?S.overlays[st.scene]:null;const ove=$("ov");if(!ovd&&art&&sc.end&&hasBg&&sc.cardOverlay)ovd=[sc.cardOverlay,0,0,320,180]; // end-card lettering layer
  // overlay: [file,x,y,w,h] or [file,x,y,w,h,frame,frames] (one frame of a horizontal strip), or {variants:[{if,ov}],ov} picked by flags/meters
  if(ovd&&!Array.isArray(ovd)){let pick=ovd.ov||null;(ovd.variants||[]).some(v=>{if(meets(v.if,st)){pick=v.ov;return true;}return false;});ovd=pick;}
  if(ovd){ove.style.display="block";ove.style.backgroundImage="url(assets/img/"+ovd[0]+")";const ofn=ovd[6]>1?ovd[6]:1,ofr=Math.max(0,Math.min(ofn-1,ovd[5]|0));ove.style.backgroundSize=(ofn*100)+"% 100%";ove.style.backgroundPosition=(ofn>1?ofr/(ofn-1)*100:0)+"% 0";ove.style.left=(ovd[1]/320*100)+"%";ove.style.top=(ovd[2]/180*100)+"%";ove.style.width=(ovd[3]/320*100)+"%";ove.style.height=(ovd[4]/180*100)+"%";}else ove.style.display="none";
@@ -768,7 +784,7 @@ function drawStage(sc){
  const dce=$("decor");if(dce){dce.innerHTML="";const dl2=art&&!sc.end&&S.decor&&Object.hasOwn(S.decor,st.scene)?S.decor[st.scene]:[];
   (Array.isArray(dl2)?dl2:[]).forEach(d=>{if(d&&!Array.isArray(d)){if(!meets(d.if,st))return;d=d.ov;}if(!Array.isArray(d))return;
    const el=document.createElement("div");el.className="dc";const fn=d[6]>1?d[6]:1,fr=d[5]|0;el.style.backgroundImage="url(assets/img/"+d[0]+")";el.style.backgroundSize=(fn*100)+"% 100%";
-   if(fn===2&&fr<0)el.classList.add("anim");else el.style.backgroundPosition=(fn>1?Math.max(0,Math.min(fn-1,fr))/(fn-1)*100:0)+"% 0";
+   if(fn===2&&fr<0)el.classList.add("anim");else if(fn===4&&fr<0)el.classList.add("anim4");else el.style.backgroundPosition=(fn>1?Math.max(0,Math.min(fn-1,fr))/(fn-1)*100:0)+"% 0";
    el.style.left=(d[1]/320*100)+"%";el.style.top=(d[2]/180*100)+"%";el.style.width=(d[3]/320*100)+"%";el.style.height=(d[4]/180*100)+"%";dce.appendChild(el);});}
  $("who").classList.toggle("low",!sc.end&&(!!ovd||(S.whoLow||[]).indexOf(sc.bg)>=0));
  const ps=st.panel?sceneById[st.panel]:sc;const ptxt=ps&&(ps.entryPanel&&st.panel?ps.entryPanel.text:panelText(ps,ps))||"";
@@ -813,12 +829,13 @@ function present(ev){const msgs=[];ev.forEach(e=>{
  if((e.type==="delta"&&(Math.abs(e.dP)>=10||e.dR<=-8))||e.type==="shake")shake();
  if(e.type==="tip"){msgs.push('<img class="toasticon" src="assets/img/tip_badge.png" alt=""><b>Pete says:</b> '+(TIPS[e.tip]||""));setTimeout(()=>playSfx("tip_ding"),150);}
  if(e.type==="note"||e.type==="event")msgs.push(sub(e.text));
+ if(e.type==="santo")msgs.push(sub(e.text));// own type: never suppresses the scene's random event roll
  if(e.type==="drift"){msgs.push(sub(EP.driftText||"(+Pressure)"));playSfx("gurgle_small");}});
  clearToasts();msgs.forEach(m=>toast(m,m.indexOf("Pete says")>=0?4500:2200));}
 function choose(i,pr){const sc=sceneById[st.scene];let c=sc&&sc.choices&&sc.choices[i];if(!c||!meets(c.requires,st)||(c.showIf&&!meets(c.showIf,st)))return;
  if(pepperActive&&pr===undefined)return;// no choice taps/keys while the minigame is open
  if(pr===undefined&&isPepperChoice(i)&&window.PepperRun){const tok=++pepperTok,sc0=st.scene;pepperActive=true;clockTick();
-  const ok=window.PepperRun.start({level:pepperHook().level,forceResult:params.get("pepperResult"),onDone:r=>{if(tok!==pepperTok||!pepperActive)return;pepperActive=false;if(!st||st.scene!==sc0)return;choose(i,r||{skipped:true});}});
+  const ok=window.PepperRun.start({level:pepperHook().level,muted:!!(META&&META.muted),forceResult:params.get("pepperResult"),onDone:r=>{if(tok!==pepperTok||!pepperActive)return;pepperActive=false;if(!st||st.scene!==sc0)return;choose(i,r||{skipped:true});}});
   if(ok===false)pepperActive=false;return;}
  if(pr){pepperAdj=pr;if(pr.fullClear){st.pepperJar=(st.pepperJar||0)+1;if(!DEBUG){META.pepperJar=(META.pepperJar||0)+1;saveMeta();}}window.__pepperLast=pr;}
  clockTick();const ev=[];applyChoice(st,c,ev,i);playSfx(c.sfx||"click");present(ev);
@@ -830,6 +847,7 @@ function finishRun(end){const scored=scoreOf(st);let newBest=false;
  let badgeNew=false;if(!DEBUG&&!VERIFY){const f=endingsFound();if(f.indexOf(st.scene)<0){f.push(st.scene);lsSet(K.endings(EP.id),JSON.stringify(f));}badgeNew=recordEnding(EP.id,st.scene);track("ending",EP.id+"/"+st.scene);
   const b=bestOf(EP.id);if(!b||scored.score>b.score){newBest=true;lsSet(K.best(EP.id),JSON.stringify({score:scored.score,timeMs:(st.elapsedMs||0)+(st.penaltyMs||0),ending:st.scene,date:today()}));}
   if(st.collected&&EP.collectible){const sh=shelf();if(!sh[EP.collectible.id]){sh[EP.collectible.id]={ep:EP.id,date:today()};lsSet(K.shelf,JSON.stringify(sh));}}}
+ if(st.flags.blessed&&!DEBUG&&!VERIFY){META.santo=(META.santo||0)+1;saveMeta();}
  lastResult={ep:EP.id,week:EP.week,title:EP.title,ending:st.scene,tag:end.tag,correct:st.correct,total:st.total,score:scored.score,secs:scored.secs,seed:st.seed,collected:!!st.collected,newBest:newBest,badgeNew:badgeNew};}
 function renderEnd(sc){
  if(!lastResult||lastResult.ending!==st.scene||lastResult.seed!==st.seed){const r=scoreOf(st);lastResult={ep:EP.id,week:EP.week,title:EP.title,ending:st.scene,tag:sc.tag,correct:st.correct,total:st.total,score:r.score,secs:r.secs,seed:st.seed,collected:!!st.collected,newBest:false};}
@@ -847,7 +865,7 @@ function renderEnd(sc){
  rec.push("<li><b>"+(sc.endTip||"")+"</b></li>");
  let text=sc.text||"";if(sc.variants)for(let i=0;i<sc.variants.length;i++)if(meets(sc.variants[i].if,st)){text=sc.variants[i].text;break;}
  const col=EP.collectible?'<span>'+EP.collectible.name+" <b>"+(R.collected?"✔ found":"—")+"</b></span>":"";
- $("text").innerHTML='<div class="end"><h2>'+sc.tag+"</h2>"+(sc.cardTitle?'<p style="color:var(--warn);font-weight:700">'+sc.cardTitle+"</p>":"")+"<p>"+sub(text)+"</p>"+(sc.whyLicensed?'<p class="why"><b>Why hire licensed:</b> '+sc.whyLicensed+"</p>":"")+'<div class="stats"><span>Correct calls <b>'+R.correct+"/"+R.total+'</b></span><span>Score <b>'+R.score+"</b>"+(R.newBest?" <i>New best!</i>":"")+'</span>'+(CHALLENGE&&CHALLENGE.ep===R.ep?'<span>Challenge <b>'+(R.score>CHALLENGE.beat?'Beat '+CHALLENGE.beat+'!':'Short of '+CHALLENGE.beat+' by '+(CHALLENGE.beat-R.score))+'</b></span>':'')+'<span>Time <b>'+fmtTime(R.secs)+'</b></span><span>Seed <b>'+R.seed+"</b></span>"+col+'</div><h3>Pro Tips from tonight</h3><ul>'+rec.join("")+"</ul></div>";
+ $("text").innerHTML='<div class="end">'+(st.flags.blessed?'<div class="santoStamp" id="santoStamp">Blessed</div>':"")+'<h2>'+sc.tag+"</h2>"+(sc.cardTitle?'<p style="color:var(--warn);font-weight:700">'+sc.cardTitle+"</p>":"")+"<p>"+sub(text)+"</p>"+(sc.whyLicensed?'<p class="why"><b>Why hire licensed:</b> '+sc.whyLicensed+"</p>":"")+'<div class="stats"><span>Correct calls <b>'+R.correct+"/"+R.total+'</b></span><span>Score <b>'+R.score+"</b>"+(R.newBest?" <i>New best!</i>":"")+'</span>'+(CHALLENGE&&CHALLENGE.ep===R.ep?'<span>Challenge <b>'+(R.score>CHALLENGE.beat?'Beat '+CHALLENGE.beat+'!':'Short of '+CHALLENGE.beat+' by '+(CHALLENGE.beat-R.score))+'</b></span>':'')+'<span>Time <b>'+fmtTime(R.secs)+'</b></span><span>Seed <b>'+R.seed+"</b></span>"+col+(st.flags.blessed||META.santo?'<span>Petin Log: El Santo sightings <b>'+(META.santo||0)+"</b></span>":"")+'</div><h3>Pro Tips from tonight</h3><ul>'+rec.join("")+"</ul></div>";
  const box=$("choices");
  const mk=(t,cls,fn,id)=>{const b=document.createElement("button");b.type="button";b.className="big"+(cls?" "+cls:"");b.textContent=t;if(id)b.id=id;b.onclick=fn;box.appendChild(b);return b;};
  mk("Share score card","",shareCard,"shareCard");
@@ -923,13 +941,17 @@ function renderCard(frame,endingArt,icon){const c=document.createElement("canvas
  return c;}
 function canvasTainted(c){try{c.toDataURL();return false;}catch(e){return true;}}
 function loadOptionalImage(src,done){if(!src)return done(null);const im=new Image();im.onload=()=>done(im);im.onerror=()=>done(null);im.src=src;}
+// Lettering overlays (Ep5): base art + same-size transparent text layer, flattened for the share card.
+function loadComposite(src,ovSrc,done){if(!ovSrc)return loadOptionalImage(src,done);loadOptionalImage(src,b=>{if(!b)return done(null);loadOptionalImage(ovSrc,o=>{if(!o)return done(b);
+ const c=document.createElement("canvas");c.width=b.naturalWidth;c.height=b.naturalHeight;const g=c.getContext("2d");g.imageSmoothingEnabled=false;g.drawImage(b,0,0);g.drawImage(o,0,0,c.width,c.height);done(c);});});}
 let preparedCard=null;
 function primeCard(){if(!lastResult)return;const pc=preparedCard={endImg:null,icon:null,pending:2,waiters:[]};const fin=()=>{if(--pc.pending<=0){const w=pc.waiters.splice(0);w.forEach(f=>f());}};
  const endName=endingArtName(lastResult.ending);
  const endSrc=ART_AVAILABLE.indexOf(endName)>=0?artPath(endName):null;
  const iconName=lastResult.collected&&EP.collectible&&EP.collectible.sprite?EP.collectible.sprite+".png":null;
- loadOptionalImage(endSrc,im=>{pc.endImg=im;fin();});
- loadOptionalImage(iconName?"assets/img/"+iconName:null,im=>{pc.icon=im;fin();});}
+ const endOv=(sceneById[lastResult.ending]||{}).cardOverlay,icOv=EP.collectible&&EP.collectible.overlay;
+ loadComposite(endSrc,endSrc&&endOv?artPath(endOv):null,im=>{pc.endImg=im;fin();});
+ loadComposite(iconName?"assets/img/"+iconName:null,iconName&&icOv?"assets/img/"+icOv:null,im=>{pc.icon=im;fin();});}
 // Wait (max 3 s) for the frame and the ending art so an early tap still gets a card with art.
 function cardWhenReady(fn){let done=false;const go=()=>{if(!done){done=true;fn();}};setTimeout(go,3000);
  const fr=$("resultFrameImg");const frameP=new Promise(r=>{if(!fr||!fr.getAttribute("src")||fr.complete)return r();fr.addEventListener("load",r,{once:true});fr.addEventListener("error",r,{once:true});});
@@ -997,6 +1019,7 @@ function startEpisode(id,fresh){if(!epOf(id))return;
  if(saved){st=cloneSt(saved);
   if(st.P>=100&&EP.failEnding&&sceneById[st.scene]&&!sceneById[st.scene].end){st.panel=null;const ev=[];enterScene(st,EP.failEnding,ev);const s2=sceneById[st.scene];if(s2&&s2.end){finishRun(s2);endSting();}}}
  else{st=freshState(seedFromQuery()||newSeed());
+  if(params.get("dev")==="1"&&params.get("santo")==="1")st.forceEv=["santo"];// El Santo test entry (dev only)
   if(DEBUG){["P","R","T"].forEach(k=>{if(params.get(k)!==null&&params.get(k)!=="")st[k]=clamp(+params.get(k));});
    if(params.get("dalehacks")!==null)st.dalehacks=Math.max(0,parseInt(params.get("dalehacks"),10)||0);}
   const want=params.get("scene");const ev=[];const sc0=DEBUG&&sceneById[want]&&!sceneById[want].end?want:st.scene;
@@ -1191,7 +1214,7 @@ function loadEpisodes(done){const dev=params.get("dev")==="1";
  const list=(window.EPISODES_INDEX||[]).filter(e=>e.file&&(dev||!e.stub));let left=list.length;if(!left)return done();
  list.forEach(e=>{const s=document.createElement("script");s.src=e.file;s.onload=s.onerror=()=>{if(--left===0)done();};document.head.appendChild(s);});}
 loadMeta();registerBuiltinEp00();
-if(PEPPER){const s=document.createElement("script");s.src="experiments/pepper-pipe/pepper-run.js";document.head.appendChild(s);}
+if(PEPPER){const s=document.createElement("script");s.src="experiments/pepper-pipe/pepper-run.js";if(PEPPER_TEST)s.onload=()=>{window.PepperRun.start({level:PEPPER_TEST,muted:!!(META&&META.muted),forceResult:params.get("pepperResult"),onDone:r=>{window.__pepperLast=r;}});};document.head.appendChild(s);}
 loadEpisodes(()=>{migrateV2();loadMeta();setMuteIcon();booted=true;
  if(VERIFY){const which=params.get("ep")||"ep00";const r=verify(which);window.__TRAP_FULL_VERIFY__=r;
   const pre=document.createElement("pre");pre.id="verifyOut";pre.textContent=JSON.stringify(r,null,1);
