@@ -20,7 +20,7 @@ const TOOLS=spr("prop_acoustic_headset.png",1,16,16,2,undefined,"Acoustic headse
 const br="<br>";
 const SMOOTHIE=spr("boy_smoothie.png",2,40,60,1.5,undefined,"The Boy with a strawberry smoothie"); // van-run return beat (e2_07's stage prop slot is taken by fx_roaches)
 registerEpisode({
-id:"ep02",title:"Under the Slab",week:2,schema:1,release:"2026-10-23", // TODO(release): spec says the Friday 8:00 AM CT after Piquin approves; date is a placeholder
+id:"ep02",title:"Under the Slab",week:2,schema:1,release:"2026-10-18", // Live since 2026-10-18. Must match episodes/index.js.
 start:{scene:"e2_01",P:18,R:50,T:60,flags:{}},
 meters:["P","R","T"],
 meterLabels:{P:"Water under the slab"},

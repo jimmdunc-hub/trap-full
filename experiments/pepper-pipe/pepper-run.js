@@ -1,7 +1,8 @@
 /* TRAP FULL × Pepper Pipe — "Pepper Run" prototype (pitch A). Vanilla JS, no dependencies, no network.
    Movement constants and the jump model (coyote time, jump buffer, double jump, variable height, one-way
    platforms) are ported from Piquin's own Pepper Pipe (routes.pretty.js). Placeholder art; Art restyles later.
-   API: PepperRun.start({parent, assetBase, boySrc, forceResult, onDone}); returns false if a run is already open
+   API: PepperRun.start({parent, assetBase, boySrc, forceResult, onDone, level});
+   level: "ep02" (default, Ms. Reyes's slab job) or "ep03" (Halloween: haunted cul-de-sac, jack-o'-lantern bumps, cobweb gap, chile petin candy). returns false if a run is already open
    result = {chilies, total, fell, cleared, fullClear, skipped, timeUp, band:"high"|"mid"|"low", secs}
    forceResult (QA): a number 0-total, "fall", "clear" or "skip" returns that result without playing. */
 (function(){
@@ -13,7 +14,7 @@ const MERCH_LINK="https://jimmdunc-hub.github.io/links/?utm_source=trapfull";
 const PW=28,PH=54,VIEW_W=960,VIEW_H=540,TIME_LIMIT=45;
 const KEYS={left:["ArrowLeft","KeyA"],right:["ArrowRight","KeyD"],jump:["ArrowUp","KeyW","Space"],drop:["ArrowDown","KeyS"]};
 // --- one short level (Ep2, Ms. Reyes’s job): her front step -> hedges, ladder racks, cooler lid -> the van's tool bin ---
-function level(){
+function level(name){if(name==="ep03")return levelEp03();if(name==="ep04")return levelEp04();
  const S=[],C=[];let id=0;const s=(x,y,w,h,o)=>S.push({id:"s"+(id++),x,y,w,h,oneWay:!!o});
  s(0,430,520,110);            // driveway start
  s(600,430,360,110);          // gap 1 (hedge)
@@ -32,6 +33,54 @@ function level(){
  s(4040,410,560,130);         // final driveway, the van at the end
  [[260,380],[650,280],[790,280],[1180,340],[1560,250],[1850,300],[2300,380],[2840,320],[3090,270],[3850,250]].forEach(p=>C.push({id:"c"+C.length,x:p[0],y:p[1]}));
  return {width:4600,height:VIEW_H,killY:600,spawn:{x:60,y:370},solids:S,coins:C,goal:{x:4460,y:300,w:110,h:110}};}
+// --- Ep3 Halloween level (Walt's cul-de-sac at night): same jump model and gap sizes as Ep2. Jack-o'-lanterns bump the Boy back
+// (time only, no meter effect); the gap after the fence is the cobweb gap; chilies are wrapped chile petin candy.
+function levelEp03(){
+ const S=[],C=[];let id=0;const s=(x,y,w,h,o)=>S.push({id:"s"+(id++),x,y,w,h,oneWay:!!o});
+ s(0,430,520,110);            // Walt's walk
+ s(600,430,360,110);          // gap 1 (leaf pile)
+ s(700,330,160,14,true);      // porch rail (one-way)
+ s(1040,400,300,140);
+ s(1420,430,240,110);
+ s(1500,300,140,14,true);
+ s(1740,360,220,180);         // garden wall top; the 120px cobweb gap follows
+ s(2080,430,680,110);
+ S.push({id:"m1",x:2790,y:380,w:100,h:16,oneWay:true,wagon:true,motion:{axis:"x",amp:40,period:3.2,phase:0}}); // moving wagon (100x16)
+ s(2920,430,420,110);
+ s(3020,320,160,14,true);     // 160 so it sits on the 20px grid
+ s(3420,380,200,160);
+ s(3700,430,260,110);
+ s(3780,300,140,14,true);
+ s(4040,410,560,130);         // the van at the curb
+ [[260,380],[650,280],[790,280],[1180,340],[1560,250],[1850,300],[2300,380],[2840,320],[3090,270],[3850,250]].forEach(p=>C.push({id:"c"+C.length,x:p[0],y:p[1]}));
+ const H=[[400,430],[1220,400],[2200,430],[2560,430],[3200,430],[4200,410]].map((q,i)=>({id:"h"+i,x:q[0],y:q[1]-20,w:20,h:20}));
+ return {width:4600,height:VIEW_H,killY:600,spawn:{x:60,y:370},solids:S,coins:C,hazards:H,web:{x:1960,w:120,y:360},goal:{x:4460,y:300,w:110,h:110},theme:"halloween"};}
+// --- Ep4 level (Gloria's alley, steamy): same jump model. Dumpster (solid lid), one-way sale table / box stack / heater shell tops,
+// a moving cart, puddles (slick: no braking), a water jet on a fence section (spray frames bump the Boy; drip frames are safe),
+// and a steam vent (puffs bump). Hazards cost time only, never a meter.
+function levelEp04(){
+ const S=[],C=[];let id=0;const s=(x,y,w,h,o,k)=>S.push({id:"s"+(id++),x,y,w,h,oneWay:!!o,kind:k||""});
+ s(0,430,520,110);            // alley start (Gloria's gate)
+ s(600,430,740,110);
+ s(880,370,80,60,false,"dumpster"); // 80x60, solid lid
+ s(1180,396,60,34,true,"table");    // sale_table top (one-way)
+ s(1420,430,540,110);
+ s(1560,390,40,40,true,"boxes");    // box_stack top
+ s(1700,350,40,80,true,"heater");   // heater_shell top
+ s(2040,430,720,110);
+ S.push({id:"m1",x:2790,y:380,w:100,h:16,oneWay:true,kind:"cart",motion:{axis:"x",amp:40,period:3.2,phase:0}}); // moving cart (100x16)
+ s(2920,430,420,110);
+ s(3020,340,60,34,true,"table");
+ s(3420,430,540,110);
+ s(3600,390,40,40,true,"boxes");
+ s(4040,410,560,130);         // Hector's van at the end of the alley
+ [[260,380],[650,300],[920,320],[1210,350],[1720,300],[2300,380],[2840,320],[3050,290],[3620,340],[3850,360]].forEach(p=>C.push({id:"c"+C.length,x:p[0],y:p[1]}));
+ const J={x:2500,y:390,w:60,h:40,fence:{x:2484,y:316}};// water jet, mounted on a world fence panel
+ const V={x:3780,y:422,w:20,h:8};// steam vent
+ const jetOn=t=>Math.floor((t%2.4)/0.6)>=2,ventOn=t=>(t%2.2)<0.9;
+ const H=[{id:"jet",x:J.x+22,y:J.y+8,w:36,h:32,on:jetOn},{id:"vent",x:V.x-4,y:V.y-30,w:28,h:30,on:ventOn}];
+ const P=[[700,424],[2300,424],[3460,424]].map((q,i)=>({id:"p"+i,x:q[0],y:q[1],w:40,h:6}));
+ return {width:4600,height:VIEW_H,killY:600,spawn:{x:60,y:370},solids:S,coins:C,hazards:H,puddles:P,jet:J,vent:V,jetOn,ventOn,goal:{x:4460,y:300,w:110,h:110},theme:"alley"};}
 function rectAt(s,t){let x=s.x,y=s.y;if(s.motion){const v=Math.sin(t/s.motion.period*Math.PI*2+s.motion.phase);if(s.motion.axis==="x")x+=v*s.motion.amp;else y+=v*s.motion.amp;}return {id:s.id,x,y,w:s.w,h:s.h,oneWay:s.oneWay};}
 function hit(x,y,w,h,r){return x<r.x+r.w&&x+w>r.x&&y<r.y+r.h&&y+h>r.y;}
 function band(r){if(r.fell)return "low";if(r.chilies>=8)return "high";if(r.chilies>=4)return "mid";return "low";}
@@ -51,18 +100,25 @@ function css(){if(document.getElementById("pepperRunCss"))return;const st=docume
  "#pepperRun button.on{background:#ef4b3a;border-color:#fff3e4}#pepperRun .pr-skip{background:#2a2318;border-color:#d7c07a;color:#d7c07a}"+
  "#pepperRun .pr-merch{display:flex;align-items:center;justify-content:center;min-height:52px;width:100%;max-width:420px;box-sizing:border-box;border-radius:10px;background:#e0a33a;color:#12100c;font-weight:700;text-decoration:none;flex:none}"+
  "#pepperRun .pr-end{font-size:1.05rem;text-align:center;max-width:520px}";document.head.appendChild(st);}
-function start(opts){opts=opts||{};const L=level();const total=L.coins.length;const done=typeof opts.onDone==="function"?opts.onDone:function(){};
+function start(opts){opts=opts||{};const L=level(opts.level);const HW=L.theme==="halloween",AL=L.theme==="alley";const total=L.coins.length;const done=typeof opts.onDone==="function"?opts.onDone:function(){};
  if(document.getElementById("pepperRun"))return false;// one run at a time: false = refused
  if(opts.forceResult!==undefined&&opts.forceResult!==null&&opts.forceResult!==""){const r=forced(String(opts.forceResult),total);setTimeout(()=>done(r),0);return r;}
  css();const base=opts.assetBase===undefined?"assets/img/":opts.assetBase;
  const root=document.createElement("div");root.id="pepperRun";root.setAttribute("role","dialog");root.setAttribute("aria-label","Pepper Run minigame");
  root.innerHTML='<div class="pr-top"><span class="pr-title">Pepper Run</span><span class="pr-hud" aria-live="polite"></span><button type="button" class="pr-skip">Skip</button></div>'+
+  (AL?'<canvas width="390" height="400" aria-label="The Boy runs down a steamy alley to the van, collecting chilies"></canvas>'+
+  '<div class="pr-hint">Gloria’s water heater. Pete needs the element tester from the van. Get the Boy down the alley: hop the dumpster, mind the puddles, time the water jet and the steam vent, and grab the chilies. Arrows/A-D run, Up/W/Space jump (twice in the air), Down drops through the table and box tops, Esc skips.</div>':
+  HW?'<canvas width="390" height="400" aria-label="The Boy runs across a haunted cul-de-sac to the van, collecting chile petín candy"></canvas>'+
+  '<div class="pr-hint">Walt’s mystery leak. Pete needs a drywall saw, inspection light and shop vac from the van. Get the Boy down the cul-de-sac, hop the jack-o’-lanterns, clear the cobweb gap and grab the chile petín candy. Arrows/A-D run, Up/W/Space jump (twice in the air), Down drops through the porch rails, Esc skips.</div>':
   '<canvas width="390" height="400" aria-label="The Boy runs from Ms. Reyes’s house to the van, collecting chilies"></canvas>'+
-  '<div class="pr-hint">Ms. Reyes’s kitchen slab. Pete needs a bucket, chisel and dust mask from the van. Get the {boy} out to the van and grab chilies on the way. Arrows/A-D run, Up/W/Space jump (twice in the air), Down drops through the ladder racks, Esc skips.</div>'.replace("{boy}","Boy")+
+  '<div class="pr-hint">Ms. Reyes’s kitchen slab. Pete needs a bucket, chisel and dust mask from the van. Get the {boy} out to the van and grab chilies on the way. Arrows/A-D run, Up/W/Space jump (twice in the air), Down drops through the ladder racks, Esc skips.</div>'.replace("{boy}","Boy"))+
   '<div class="pr-pad"><div><button type="button" data-k="left" aria-label="Run left">◀</button><button type="button" data-k="right" aria-label="Run right">▶</button></div><div><button type="button" data-k="drop" aria-label="Drop down">▼</button><button type="button" data-k="jump" aria-label="Jump">▲</button></div></div>';
  (opts.parent||document.body).appendChild(root);
  const cv=root.querySelector("canvas"),g=cv.getContext("2d"),hud=root.querySelector(".pr-hud");g.imageSmoothingEnabled=false;
- const boy=new Image();let boyOk=false;boy.onload=()=>{boyOk=true;};boy.onerror=()=>{boyOk=false;};boy.src=opts.boySrc||(base+"boy_idle.png");// boySrc: a data URL in self-contained builds
+ const boy=new Image();let boyOk=false;boy.onload=()=>{boyOk=true;};boy.onerror=()=>{boyOk=false;};boy.src=opts.boySrc||(base+"boy_idle.png");const BF=[40,60];// the Boy stays 40x60 in every level
+ // Ep3 art (TRAP FULL Art, assets/img/ep3_upgrade/pepperrun (ep3-upgrade: far/mid/ground/platform/porch/van) + assets/pepperrun/ep3 (sky, props) + assets/brand "Petin, Texas" decals); shapes only if a file fails to load
+ const IM={};if(AL){const pr=base.replace(/img\/?$/,"");[["sky","pepperrun/ep4/parallax_sky"],["far","pepperrun/ep4/parallax_far"],["mid","pepperrun/ep4/parallax_mid"],["ground","pepperrun/ep4/tiles_asphalt"],["plat","pepperrun/ep4/tiles_platform_e4"],["cart","pepperrun/ep4/plat_moving_cart"],["dumpster","pepperrun/ep4/dumpster"],["table","pepperrun/ep4/sale_table"],["boxes","pepperrun/ep4/box_stack"],["heater","pepperrun/ep4/heater_shell"],["puddle","pepperrun/ep4/hazard_puddle"],["jet","pepperrun/ep4/water_jet"],["vent","pepperrun/ep4/steam_vent"],["steam","img/fx_steam"],["chile","pepperrun/ep4/pickup_chile"],["gate","pepperrun/ep4/start_gate"],["van","pepperrun/ep4/goal_hector_van"],["sign","brand/petin_texas_sign_lettered"],["tower","brand/petin_texas_tower_decal_lettered"],["door","brand/ep4_van_hector_door_lettered"]].forEach(([k,f])=>{const im=new Image();im.onload=()=>{IM[k]=im;};im.src=pr+f+".png";});}
+ if(HW){const pr=base.replace(/img\/?$/,"");[["sky","pepperrun/ep3/parallax_sky"],["far","img/ep3_upgrade/pepperrun/parallax_far"],["mid","img/ep3_upgrade/pepperrun/parallax_mid"],["ground","img/ep3_upgrade/pepperrun/tiles_ground"],["plat","img/ep3_upgrade/pepperrun/tiles_platform"],["wagon","pepperrun/ep3/plat_moving_wagon"],["leaf","pepperrun/ep3/soft_leafpile"],["web","pepperrun/ep3/cobweb_gap"],["jack","pepperrun/ep3/hazard_jackolantern"],["candy","pepperrun/ep3/pickup_chile_candy"],["porch","img/ep3_upgrade/pepperrun/start_porch"],["van","img/ep3_upgrade/pepperrun/goal_van_night"],["sign","brand/petin_texas_sign_lettered"],["tower","brand/petin_texas_tower_decal_lettered"],["door","brand/petin_texas_vandoor_lettered"],["tea","img/boy_pumpkintea"],["grab","img/prop_skeleton_grabber"]].forEach(([k,f])=>{const im=new Image();im.onload=()=>{IM[k]=im;};im.src=pr+f+".png";});}// boySrc: a data URL in self-contained builds
  const held=new Set(),touch={left:false,right:false,jump:false,drop:false};
  const down=k=>KEYS[k].some(c=>held.has(c))||touch[k];
  const onKey=e=>{if(e.code==="Escape"){e.preventDefault();end({skipped:true});return;}if(Object.values(KEYS).some(a=>a.indexOf(e.code)>=0)){e.preventDefault();e.type==="keydown"?held.add(e.code):held.delete(e.code);}};
@@ -71,13 +127,13 @@ function start(opts){opts=opts||{};const L=level();const total=L.coins.length;co
   b.addEventListener("touchstart",on,{passive:false});b.addEventListener("touchend",off,{passive:false});b.addEventListener("touchcancel",off,{passive:false});
   b.addEventListener("pointerdown",e=>{if(e.pointerType!=="touch")on(e);});b.addEventListener("pointerup",e=>{if(e.pointerType!=="touch")off(e);});b.addEventListener("pointerleave",e=>{if(e.pointerType!=="touch")off(e);});});
  root.querySelector(".pr-skip").onclick=()=>end({skipped:true});
- const p={x:L.spawn.x,y:L.spawn.y,vx:0,vy:0,facing:1,grounded:false,groundId:null,jumpsLeft:2,coyote:0,buffer:0,jumpWas:false,cutArmed:false,dropTimer:0,airTime:0,anim:0};
+ const p={x:L.spawn.x,y:L.spawn.y,vx:0,vy:0,facing:1,grounded:false,groundId:null,jumpsLeft:2,coyote:0,buffer:0,jumpWas:false,cutArmed:false,dropTimer:0,airTime:0,anim:0,hurt:0};let bumps=0;
  let t=0,camX=0,camY=0,look=0,lookT=0,anchorY=L.spawn.y+PH,Z=1,dpr=1,vw=VIEW_W,vh=VIEW_H,closeAt=0,closed=false,contGo=null,camLog=[],mode="play",got=new Set(),prev=new Map(L.solids.map(s=>[s.id,rectAt(s,0)])),raf=0,last=0,acc=0,result=null,endTimer=0,msg="";
- function step(dt){t+=dt;p.dropTimer=Math.max(0,p.dropTimer-dt);p.anim+=dt;
+ function step(dt){t+=dt;p.dropTimer=Math.max(0,p.dropTimer-dt);p.hurt=Math.max(0,p.hurt-dt);p.anim+=dt;
   const R=L.solids.map(s=>rectAt(s,t)),M=new Map(R.map(r=>[r.id,r]));
   if(p.groundId){const a=M.get(p.groundId),b=prev.get(p.groundId);if(a&&b){p.x+=a.x-b.x;p.y+=a.y-b.y;}}
-  let dir=(down("left")?-1:0)+(down("right")?1:0);const ac=p.grounded?ACC_G:ACC_A;
-  if(dir){p.vx+=dir*ac*dt;p.facing=dir;}else{const f=(p.grounded?FRIC_G:FRIC_A)*dt;p.vx=Math.abs(p.vx)<=f?0:p.vx-Math.sign(p.vx)*f;}
+  let dir=(down("left")?-1:0)+(down("right")?1:0);const slick=!!(L.puddles&&p.grounded&&L.puddles.some(q=>p.x+PW>q.x+6&&p.x<q.x+q.w-6&&Math.abs(p.y+PH-q.y-6)<10));const ac=p.grounded&&!slick?ACC_G:ACC_A;
+  if(dir){p.vx+=dir*ac*dt;p.facing=dir;}else{const f=(p.grounded&&!slick?FRIC_G:FRIC_A)*dt;p.vx=Math.abs(p.vx)<=f?0:p.vx-Math.sign(p.vx)*f;}
   p.vx=Math.max(-MAXV,Math.min(MAXV,p.vx));
   let gr=p.vy<0?GRAV_UP:GRAV_DN;if(Math.abs(p.vy)<APEX)gr*=0.5;p.vy=Math.min(MAXFALL,p.vy+gr*dt);
   const j=down("jump");if(j&&!p.jumpWas)p.buffer=BUFFER;p.jumpWas=j;p.buffer=Math.max(0,p.buffer-dt);
@@ -94,6 +150,7 @@ function start(opts){opts=opts||{};const L=level();const total=L.coins.length;co
    else if(p.vy>0||foot<=r.y+8){p.y=r.y-PH;p.vy=0;gnd=r;}else{p.y=r.y+r.h;p.vy=0;p.cutArmed=false;}});
   p.grounded=gnd!==null;p.groundId=gnd?gnd.id:null;p.x=Math.max(0,Math.min(L.width-PW,p.x));
   L.coins.forEach(c=>{if(got.has(c.id))return;const dx=p.x+14-c.x,dy=p.y+27-c.y;if(dx*dx+dy*dy<676)got.add(c.id);});
+  if(L.hazards&&p.hurt<=0)L.hazards.forEach(h=>{if(p.hurt<=0&&(!h.on||h.on(t))&&hit(p.x+4,p.y,PW-8,PH,h)){const back=p.x+PW/2<h.x+h.w/2?-1:1;p.vx=back*MAXV;p.vy=-420;p.grounded=false;p.groundId=null;p.jumpsLeft=1;p.hurt=0.9;bumps++;}});// jack-o'-lantern bump: costs time only
   if(p.y>L.killY)return end({fell:true});
   if(hit(p.x,p.y,PW,PH,L.goal))return end({cleared:true});
   if(t>=TIME_LIMIT)return end({timeUp:true});
@@ -110,6 +167,7 @@ function start(opts){opts=opts||{};const L=level();const total=L.coins.length;co
  const ground=L.solids.filter(s=>!s.oneWay&&!s.motion).sort((a,b)=>a.x-b.x),gaps=[];
  for(let i=1;i<ground.length;i++){const a=ground[i-1],b=ground[i];if(b.x>a.x+a.w+8)gaps.push({x:a.x+a.w,y:a.y,w:b.x-(a.x+a.w)});}
  // --- smooth follow camera: frame-rate independent easing (1-exp(-k dt)), dead zone, eased look-ahead, ground-anchored vertical ---
+ const CAM_MAX_STEP=5.8;
  function camClamp(x,y){x=Math.max(0,Math.min(L.width-vw,x));y=vh>=L.height?L.height-vh:Math.max(0,Math.min(L.height-vh,y));return [x,y];}
  function updCam(dt,snap){const LOOK=Math.min(250,vw*0.46),DZ=Math.min(24,vw*0.06);
   if(Math.abs(p.vx)>40)lookT=Math.sign(p.vx)*LOOK;// keep the last direction when he stops
@@ -118,11 +176,48 @@ function start(opts){opts=opts||{};const L=level();const total=L.coins.length;co
   const fx=p.x+PW/2+look;let d=fx-(camX+vw/2);d=Math.abs(d)<=DZ?0:d-Math.sign(d)*DZ;
   let ty=anchorY-vh*0.74;ty=Math.min(ty,p.y-vh*0.1);// keep his head in view on big jumps
   let [tx,cy]=camClamp(snap?fx-vw/2:camX+d,ty);
+  const ox=camX,oy=camY;
   if(snap){camX=tx;camY=cy;}else{camX+=(tx-camX)*(1-Math.exp(-12*dt));camY+=(cy-camY)*(1-Math.exp(-4.5*dt));}
-  [camX,camY]=camClamp(camX,camY);}
+  [camX,camY]=camClamp(camX,camY);
+  // hard per-frame speed limit: at most CAM_MAX_STEP world px per rendered frame (= 5.8*cssK CSS px: <=7.33 on a 390-wide phone, <=11.6 on desktop; QA caps 7.4 / 13.2)
+  if(!snap){const mx=camX-ox,my=camY-oy,m=Math.hypot(mx,my);if(m>CAM_MAX_STEP){const k=CAM_MAX_STEP/m;camX=ox+mx*k;camY=oy+my*k;}}}
  function onResize(){fit();updCam(0,true);draw();}
  window.addEventListener("resize",onResize);
+ function tile(im,x0,x1,y,w,h,sx){for(let x=x0;x<x1;x+=w){const ww=Math.min(w,x1-x);g.drawImage(im,sx||0,0,ww,h,x,y,ww,h);}}
+ function drawHW(){const W=cv.width,H=cv.height,ox=Math.round(camX*Z),oy=Math.round(camY*Z);
+  g.setTransform(Z,0,0,Z,-Math.round(camX*0.1*Z),-oy);if(IM.sky)for(let x=Math.floor(camX*0.1/380)*380;x<camX*0.1+vw+380;x+=380)g.drawImage(IM.sky,x,0);else{g.fillStyle="#1d2333";g.fillRect(camX*0.1,0,vw,VIEW_H);}
+  g.setTransform(Z,0,0,Z,-Math.round(camX*0.3*Z),-oy);if(IM.far)for(let x=Math.floor(camX*0.3/380)*380;x<camX*0.3+vw+380;x+=380){g.drawImage(IM.far,x,230);if(IM.tower)g.drawImage(IM.tower,x+200,242);}
+  g.setTransform(Z,0,0,Z,-Math.round(camX*0.6*Z),-oy);if(IM.mid)for(let x=Math.floor(camX*0.6/380)*380;x<camX*0.6+vw+380;x+=380)g.drawImage(IM.mid,x,310);
+  g.setTransform(Z,0,0,Z,-ox,-oy);
+  if(IM.leaf)tile(IM.leaf,0,L.width,500,24,40);else{g.fillStyle="#a0521e";g.fillRect(0,500,L.width,40);}// leaf pile under the gaps
+  if(IM.porch)g.drawImage(IM.porch,-40,270);if(IM.sign)g.drawImage(IM.sign,200,390);
+  if(IM.web){const w=L.web;g.drawImage(IM.web,w.x+w.w/2-80,w.y);}// cobweb_gap, decorative (not sticky)
+  L.solids.forEach(s=>{const r=rectAt(s,t);if(s.wagon&&IM.wagon)g.drawImage(IM.wagon,r.x,r.y);else if(r.oneWay&&IM.plat)tile(IM.plat,r.x,r.x+r.w,r.y,60,14);
+   else if(IM.ground){tile(IM.ground,r.x,r.x+r.w,r.y,60,40);g.fillStyle="#4a3524";g.fillRect(r.x,r.y+40,r.w,Math.max(0,r.h-40));}
+   else{g.fillStyle=r.oneWay?"#b9b2a4":"#4a4250";g.fillRect(r.x,r.y,r.w,r.oneWay?6:r.h);}});
+  const G=L.goal;if(IM.van){const vx=G.x-60,vy=410-104;g.drawImage(IM.van,vx,vy);if(IM.door)g.drawImage(IM.door,vx+84,vy+62);}
+  (L.hazards||[]).forEach((h,i)=>{if(IM.jack)g.drawImage(IM.jack,((Math.floor(t*3)+i)%2)*20,0,20,20,h.x,h.y,20,20);else{g.fillStyle="#e07a1a";g.fillRect(h.x,h.y,20,20);}});
+  L.coins.forEach((c,i)=>{if(got.has(c.id))return;const bob=Math.sin(t*4+i)*4;if(IM.candy)g.drawImage(IM.candy,((Math.floor(t*8)+i)%4)*12,0,12,16,c.x-6,c.y-8+bob,12,16);else{g.fillStyle="#c0392b";g.fillRect(c.x-5,c.y-8+bob,10,16);}});}
+ function drawAL(){const oy=Math.round(camY*Z),ox=Math.round(camX*Z);
+  g.setTransform(Z,0,0,Z,-Math.round(camX*0.1*Z),-oy);if(IM.sky)for(let x=Math.floor(camX*0.1/380)*380;x<camX*0.1+vw+380;x+=380)g.drawImage(IM.sky,x,0);else{g.fillStyle="#c9c3b4";g.fillRect(camX*0.1,0,vw,VIEW_H);}
+  g.setTransform(Z,0,0,Z,-Math.round(camX*0.3*Z),-oy);if(IM.far)for(let x=Math.floor(camX*0.3/380)*380;x<camX*0.3+vw+380;x+=380){g.drawImage(IM.far,x,230);if(IM.tower)g.drawImage(IM.tower,x+200,242);}
+  g.setTransform(Z,0,0,Z,-Math.round(camX*0.6*Z),-oy);if(IM.mid)for(let x=Math.floor(camX*0.6/380)*380;x<camX*0.6+vw+380;x+=380)g.drawImage(IM.mid,x,290);
+  g.setTransform(Z,0,0,Z,-ox,-oy);const J=L.jet,V=L.vent;
+  if(IM.mid)g.drawImage(IM.mid,149,26,92,114,J.fence.x,J.fence.y,92,114);// fence section (from parallax_mid) the water jet is mounted on
+  if(IM.gate)g.drawImage(IM.gate,-40,270);if(IM.sign)g.drawImage(IM.sign,180,390);
+  L.solids.forEach(s=>{const r=rectAt(s,t),im=IM[s.kind];if(s.kind==="cart"&&im)g.drawImage(im,r.x,r.y);
+   else if(im&&(s.kind==="dumpster"||s.kind==="table"||s.kind==="boxes"||s.kind==="heater"))g.drawImage(im,r.x,r.y);
+   else if(r.oneWay&&IM.plat)tile(IM.plat,r.x,r.x+r.w,r.y,60,14);
+   else if(IM.ground){tile(IM.ground,r.x,r.x+r.w,r.y,60,40);g.fillStyle="#2a292e";g.fillRect(r.x,r.y+40,r.w,Math.max(0,r.h-40));}
+   else{g.fillStyle=r.oneWay?"#b9b2a4":"#3a3940";g.fillRect(r.x,r.y,r.w,r.oneWay?6:r.h);}});
+  (L.puddles||[]).forEach((q,i)=>{if(IM.puddle)g.drawImage(IM.puddle,((Math.floor(t*2)+i)%2)*40,0,40,6,q.x,q.y,40,6);else{g.fillStyle="#6a8fc0";g.fillRect(q.x,q.y,40,6);}});
+  if(IM.jet)g.drawImage(IM.jet,Math.floor((t%2.4)/0.6)*60,0,60,40,J.x,J.y,60,40);
+  if(IM.vent)g.drawImage(IM.vent,V.x,V.y);if(IM.steam&&L.ventOn(t))g.drawImage(IM.steam,(Math.floor(t*6)%3)*32,0,32,32,V.x-6,V.y-30,32,32);
+  const G=L.goal;if(IM.van){const vx=G.x-60,vy=410-104;g.drawImage(IM.van,vx,vy);if(IM.door)g.drawImage(IM.door,vx+40,vy+46);}
+  L.coins.forEach((c,i)=>{if(got.has(c.id))return;const bob=Math.sin(t*4+i)*4;if(IM.chile)g.drawImage(IM.chile,((Math.floor(t*8)+i)%4)*12,0,12,16,c.x-6,c.y-8+bob,12,16);else{g.fillStyle="#ef4b3a";g.fillRect(c.x-5,c.y-8+bob,10,16);}});}
  function draw(){const W=cv.width,H=cv.height;g.setTransform(1,0,0,1,0,0);g.imageSmoothingEnabled=false;
+  if(AL){drawAL();const ox=Math.round(camX*Z),oy=Math.round(camY*Z);g.setTransform(Z,0,0,Z,-ox,-oy);g.save();drawBoyEtc();return;}
+  if(HW){drawHW();const ox=Math.round(camX*Z),oy=Math.round(camY*Z);g.setTransform(Z,0,0,Z,-ox,-oy);g.save();drawBoyEtc();return;}
   const sky=g.createLinearGradient(0,0,0,H);sky.addColorStop(0,"#2a1c34");sky.addColorStop(1,"#5a3a4a");g.fillStyle=sky;g.fillRect(0,0,W,H);
   const ox=Math.round(camX*Z),oy=Math.round(camY*Z);// rounded device-pixel offset keeps pixels crisp
   g.setTransform(Z,0,0,Z,-Math.round(camX*0.35*Z),-oy);g.fillStyle="#3b2a40";const span=Math.ceil((vw+camX*0.35)/380)+2;
@@ -137,18 +232,20 @@ function start(opts){opts=opts||{};const L=level();const total=L.coins.length;co
   const G=L.goal;g.fillStyle="#e8c23a";g.fillRect(G.x-60,G.y+20,190,90);g.fillStyle="#7bd34a";g.fillRect(G.x-60,G.y+60,190,8);g.fillStyle="#ef6aa0";g.fillRect(G.x-60,G.y+72,190,6);
   g.fillStyle="#222";g.beginPath();g.arc(G.x-20,G.y+112,16,0,7);g.arc(G.x+95,G.y+112,16,0,7);g.fill();g.fillStyle="#c0392b";g.fillRect(G.x+10,G.y-4,60,26);g.fillStyle="#8e2a20";g.fillRect(G.x+10,G.y+6,60,4);g.fillStyle="#c8c8c0";g.fillRect(G.x+80,G.y-18,26,24);g.fillStyle="#9a9a92";g.fillRect(G.x+78,G.y-20,30,4);g.fillStyle="#d9d9d9";g.fillRect(G.x+30,G.y-14,4,14);
   L.coins.forEach((c,i)=>{if(got.has(c.id))return;const bob=Math.sin(t*4+i)*4;g.save();g.translate(c.x,c.y+bob);g.rotate(-0.5);g.fillStyle="#ef4b3a";g.beginPath();g.ellipse(0,0,7,15,0,0,7);g.fill();g.fillStyle="#3c8d2f";g.fillRect(-3,-19,6,6);g.restore();});
+  drawBoyEtc();}
+ function drawBoyEtc(){const W=cv.width,H=cv.height;
   // the Boy (sprite if loaded, else shapes)
   const fx=Math.round(p.x)-6,fy=Math.round(p.y)-6;
-  if(boyOk){const fr=Math.floor(p.anim*6)%2;g.save();if(p.facing<0){g.translate(fx+40,0);g.scale(-1,1);g.drawImage(boy,fr*40,0,40,60,0,fy,40,60);}else g.drawImage(boy,fr*40,0,40,60,fx,fy,40,60);g.restore();}
+  if(boyOk){const fr=Math.floor(p.anim*6)%2,bw=BF[0],bh=BF[1],by=fy+60-bh;g.save();if(p.hurt>0&&Math.floor(p.hurt*12)%2)g.globalAlpha=0.45;if(p.facing<0){g.translate(fx+bw,0);g.scale(-1,1);g.drawImage(boy,fr*bw,0,bw,bh,0,by,bw,bh);}else g.drawImage(boy,fr*bw,0,bw,bh,fx,by,bw,bh);g.restore();}
   else{g.fillStyle="#e8c23a";g.fillRect(p.x,p.y+16,PW,24);g.fillStyle="#2e4a7a";g.fillRect(p.x+2,p.y+40,PW-4,14);g.fillStyle="#c98e5c";g.fillRect(p.x+5,p.y+2,18,16);g.fillStyle="#c0392b";g.fillRect(p.x+3,p.y,22,6);}
   // edge warning: the next gap, before it scrolls into view
-  const nx=gaps.find(q=>q.x>camX+vw-4&&q.x<camX+vw+320&&lookT>0);if(nx&&mode==="play"){const ax=camX+vw-10,ay=nx.y-26;g.fillStyle="#ef4b3a";g.beginPath();g.moveTo(ax+8,ay);g.lineTo(ax-4,ay-8);g.lineTo(ax-4,ay+8);g.fill();g.fillStyle="#4f8a3a";g.fillRect(ax-6,ay+12,14,4);}
+  const nx=gaps.find(q=>q.x>camX+vw-4&&q.x<camX+vw+320&&lookT>0);if(nx&&mode==="play"){const ax=camX+vw-10,ay=nx.y-26;g.fillStyle="#ef4b3a";g.beginPath();g.moveTo(ax+8,ay);g.lineTo(ax-4,ay-8);g.lineTo(ax-4,ay+8);g.fill();g.fillStyle=HW?"#a0521e":"#4f8a3a";g.fillRect(ax-6,ay+12,14,4);}
   g.restore();g.setTransform(1,0,0,1,0,0);
-  if(mode!=="play"){g.fillStyle="rgba(22,16,31,.78)";g.fillRect(0,0,W,H);g.fillStyle="#fff3e4";const fs=Math.round(Math.min(W/12,34*dpr));g.font="bold "+fs+"px system-ui,sans-serif";g.textAlign="center";g.fillText(msg,W/2,H/2-fs*0.3);g.font=Math.round(fs*0.65)+"px system-ui,sans-serif";g.fillText("Chilies "+got.size+"/"+total,W/2,H/2+fs*0.9);if(mode==="over"&&!(result&&result.skipped)){g.fillStyle="#d7c07a";g.font=Math.round(fs*0.55)+"px system-ui,sans-serif";g.fillText("Tap to continue",W/2,H/2+fs*1.9);}g.textAlign="left";}
-  hud.textContent="🌶 "+got.size+"/"+total+" · "+Math.max(0,Math.ceil(TIME_LIMIT-t))+"s";}
+  if(mode!=="play"){g.fillStyle="rgba(22,16,31,.78)";g.fillRect(0,0,W,H);g.fillStyle="#fff3e4";const fs=Math.round(Math.min(W/12,34*dpr));g.font="bold "+fs+"px system-ui,sans-serif";g.textAlign="center";g.fillText(msg,W/2,H/2-fs*0.3);g.font=Math.round(fs*0.65)+"px system-ui,sans-serif";g.fillText((HW?"Candy ":"Chilies ")+got.size+"/"+total,W/2,H/2+fs*0.9);if(HW&&mode==="over"&&result&&!result.skipped){const lo=result.band==="low",im=lo?IM.grab:IM.tea,k=Math.max(1,Math.round(fs/14));if(im){const sw=lo?32:40,sh=lo?32:60;g.drawImage(im,0,0,sw,sh,Math.round(W/2-sw*k/2),Math.round(H/2-fs*1.4-sh*k),sw*k,sh*k);}}/* Ep3 ending: pumpkin spice tea, or the skeleton grabber */if(mode==="over"&&!(result&&result.skipped)){g.fillStyle="#d7c07a";g.font=Math.round(fs*0.55)+"px system-ui,sans-serif";g.fillText("Tap to continue",W/2,H/2+fs*1.9);}g.textAlign="left";}
+  hud.textContent=(HW?"🍬 ":"🌶 ")+got.size+"/"+total+" · "+Math.max(0,Math.ceil(TIME_LIMIT-t))+"s";}
  function end(o){if(mode!=="play")return;mode="over";cancelAnimationFrame(raf);
-  result=finish({chilies:o.skipped?0:got.size,total,fell:!!o.fell,cleared:!!o.cleared,skipped:!!o.skipped,timeUp:!!o.timeUp,secs:Math.round(t*10)/10});
-  msg=o.skipped?"Skipped":o.fell?"Into the hedge!":o.cleared?(result.fullClear?"Full clear!":"Made it to the van"):"Time's up";draw();
+  result=finish({level:HW?"ep03":AL?"ep04":"ep02",bumps,chilies:o.skipped?0:got.size,total,fell:!!o.fell,cleared:!!o.cleared,skipped:!!o.skipped,timeUp:!!o.timeUp,secs:Math.round(t*10)/10});
+  msg=o.skipped?"Skipped":o.fell?(HW?"Into the leaf pile!":AL?"Down the drain gap!":"Into the hedge!"):o.cleared?(result.fullClear?"Full clear!":"Made it to the van"):"Time's up";draw();
   if(!o.skipped){const a=document.createElement("a");a.className="pr-merch";a.href=opts.merchLink||MERCH_LINK;a.target="_blank";a.rel="noopener";a.textContent="Get the Merch";const hint=root.querySelector(".pr-hint");root.insertBefore(a,hint);fit();[camX,camY]=camClamp(camX,camY);draw();}// no camera snap at the end
   if(o.skipped){close();return;}
   // result summary waits for a tap, click or key (not a timer). The input that ended the run is ignored for 300 ms.

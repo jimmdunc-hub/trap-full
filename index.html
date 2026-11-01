@@ -141,7 +141,7 @@ body.panelOpen #app{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 #cardSave p{max-width:22rem;text-align:center}
 #cardSave .big{max-width:22rem}
 </style>
-<script data-goatcounter="https://petinplumbco.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<script data-goatcounter="https://petinplumbco.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </head>
 <body>
 <div id="overlay">
@@ -195,10 +195,13 @@ const MERCH_PRODUCTS={
  e1_pro:"pixel-two-handle-faucet-sticker-retro-plumber-tool-art-1",     // "faucet's new"
  e2_hotspring:"pixel-water-heater-sticker-retro-plumber-tool-art-1",    // hot-water line leak
  e2_righthole:"pixel-rotary-hammer-sticker-retro-plumber-tool-art-1",   // chipping the slab
- e2_wronghole:"pixel-rotary-hammer-sticker-retro-plumber-tool-art-1"};  // chipping the (wrong) slab spot
+ e2_wronghole:"pixel-rotary-hammer-sticker-retro-plumber-tool-art-1",   // chipping the (wrong) slab spot
+ e4_hotagain:"pixel-water-heater-sticker-retro-plumber-tool-art-1"};   // Ep4 "Hot Again": Pixel Water Heater sticker (spec)
 // Certified Apprentice badge reward: placeholder only (no discount code). Set later, e.g. {text:"...",url:"..."}.
 const APPRENTICE_REWARD=null;
 // Art: list files here once they exist in assets/img/ (empty = CSS stage, no network requests)
+// Ep3 upgrade: EP.artDir {dir,files} routes listed art to an episode subfolder (e.g. assets/img/ep3_upgrade/); everything else stays assets/img/.
+function artPath(n){const d=typeof EP!=="undefined"&&EP&&EP.artDir;return "assets/img/"+(d&&d.files.indexOf(n)>=0?d.dir+n:n);}
 const ART_AVAILABLE=["bg_truck.png","bg_bath_cabinet.png","bg_tub.png","bg_party.png","card_endPro.png","card_endNote.png","card_endKevin.png","card_endBlowout.png","card_endPepper.png","card_endYogurt.png","card_endHandyman.png","prop_dale_card_large.png"];
 // Audio: list names once files exist in assets/sfx|music/ (empty = synthesized fallback beeps)
 const AUDIO_AVAILABLE=[];
@@ -387,17 +390,17 @@ function useEpisode(id){
 }
 function showStub(){return params.get("dev")==="1";}
 // Release gating: an episode is listed, playable and featured once its release date (YYYY-MM-DD) is today or earlier
-// in the player's local date. ?dev=1 shows unreleased ones; ?today=YYYY-MM-DD (or window.TRAP_TODAY, set only by the
+// in the player's local date. ?dev=1 shows unreleased ones; ?dev=1&today=YYYY-MM-DD (ignored without dev=1; or window.TRAP_TODAY, set only by the
 // private test build) overrides the date for QA. A release may also carry a time and UTC offset (see isReleased).
-function todayStr(){const ok=v=>{if(typeof v!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;const [y,m,d]=v.split("-").map(Number);const t=new Date(Date.UTC(y,m-1,d));return t.getUTCFullYear()===y&&t.getUTCMonth()===m-1&&t.getUTCDate()===d;};const q=params.get("today");if(ok(q))return q;if(ok(window.TRAP_TODAY))return window.TRAP_TODAY;
+function todayStr(){const ok=v=>{if(typeof v!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(v))return false;const [y,m,d]=v.split("-").map(Number);const t=new Date(Date.UTC(y,m-1,d));return t.getUTCFullYear()===y&&t.getUTCMonth()===m-1&&t.getUTCDate()===d;};const q=showStub()?params.get("today"):null;if(ok(q))return q;if(ok(window.TRAP_TODAY))return window.TRAP_TODAY;
  const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function isReleased(id){const ep=epOf(id);if(!ep)return false;const ix=(window.EPISODES_INDEX||[]).find(e=>e.id===id);const rel=(ix&&ix.release)||ep.release||"";
  if(/^\d{4}-\d{2}-\d{2}$/.test(rel))return rel<=todayStr();
  // Timed gate: "YYYY-MM-DDTHH:MM[:SS](Z|±HH:MM)", e.g. "2026-10-31T08:00-05:00". An exact instant, the same for every player.
- // ?now=<same format> overrides the clock for QA; a ?today= / TRAP_TODAY date override opens it for that whole day.
+ // ?dev=1&now=<same format> overrides the clock for QA (ignored without dev=1); a ?today= / TRAP_TODAY date override opens it for that whole day.
  const RX=/^(\d{4}-\d{2}-\d{2})T\d{2}:\d{2}(:\d{2})?(Z|[+-]\d{2}:\d{2})$/;const m=RX.exec(rel);if(!m)return !rel;const at=Date.parse(rel);if(!isFinite(at))return false;
- const nq=params.get("now");if(nq&&RX.test(nq)&&isFinite(Date.parse(nq)))return Date.parse(nq)>=at;
- const tq=params.get("today");if((tq&&/^\d{4}-\d{2}-\d{2}$/.test(tq))||typeof window.TRAP_TODAY==="string")return m[1]<=todayStr();
+ const nq=showStub()?params.get("now"):null;if(nq&&RX.test(nq)&&isFinite(Date.parse(nq)))return Date.parse(nq)>=at;
+ const tq=showStub()?params.get("today"):null;if((tq&&/^\d{4}-\d{2}-\d{2}$/.test(tq))||typeof window.TRAP_TODAY==="string")return m[1]<=todayStr();
  return Date.now()>=at;}
 function canPlay(id){return !!epOf(id)&&(showStub()||(isReleased(id)&&!epOf(id).stub));}
 function episodeList(){
@@ -518,8 +521,10 @@ function enterScene(st,id,ev){
   if(sc.enterTip){ev.push({type:"tip",tip:sc.enterTip});if(sc.enterTipRecap&&st.seenTips.indexOf(sc.enterTip)<0)st.seenTips.push(sc.enterTip);}
   const slot=(EP.events||[]).filter(e=>e.at&&e.at.indexOf(id)>=0&&!st.flags["ev_"+e.id]);
   if(slot.length&&!ev.some(x=>x.type==="event")){
+   // verify playScripts: when a run forces an event at this scene, only forced events fire here (no roll for the others)
+   const forcedHere=!!st.forceEv&&slot.some(e=>st.forceEv.indexOf(e.id)>=0);
    for(let i=0;i<slot.length;i++){const e=slot[i];st.flags["ev_"+e.id]=true;
-    if((st.forceEv&&st.forceEv.indexOf(e.id)>=0)||rng(st)<e.chance){for(const k of ["P","R","T"])if(e.effects&&e.effects[k])st[k]=clamp(st[k]+e.effects[k]);(e.setFlags||[]).forEach(f=>st.flags[f]=true);if(e.shake)ev.push({type:"shake"});
+    if(forcedHere?st.forceEv.indexOf(e.id)>=0:rng(st)<e.chance){for(const k of ["P","R","T"])if(e.effects&&e.effects[k])st[k]=clamp(st[k]+e.effects[k]);(e.setFlags||[]).forEach(f=>st.flags[f]=true);if(e.shake)ev.push({type:"shake"});
      ev.push({type:"event",text:e.text});if(e.tip){st.tipsRight.push(e.tip);ev.push({type:"tip",tip:e.tip});}break;}}}
   if(st.P>=100&&EP.failEnding){id=EP.failEnding;continue;}
   const pl=EP.patienceLeave;if(pl&&st.T<=pl.at&&!st.flags[pl.flag]){st.flags[pl.flag]=true;ev.push({type:"note",text:pl.text});}
@@ -527,23 +532,31 @@ function enterScene(st,id,ev){
   return;}
 }
 function applyChoice(st,c,ev,idx){
+ if(c.secs)st.penaltyMs=(st.penaltyMs||0)+c.secs*1000;
  const before={P:st.P,R:st.R};const e=Object.assign({},c.effects||{});
  let tip=c.tip,correct=c.correct,note=c.noteAlt&&meets(c.noteAlt.if,st)?c.noteAlt.text:c.note;
  if(c.chemPenalty&&st.flags.chemicals)e.R=(e.R||0)-5;
  if(c.chemPlunge&&st.flags.chemicals){e.R=(e.R||0)-10;e.P=(e.P||0)+5;tip="chemPlunge";correct=false;note="The plunger burps the drain cleaner right back up. Caustic splash-back on your sleeve; the cabinet now smells like a pool fire.";}
  if(c.alt&&meets(c.alt.if,st)){const a=c.alt;for(const k in (a.addEffects||{}))e[k]=(e[k]||0)+a.addEffects[k];if(a.tip)tip=a.tip;if(a.correct!==undefined)correct=a.correct;if(a.note)note=a.note;}
+ // Ep3 upgrade: c.roll = seeded branch on the run RNG {chance, setFlags, note, else:{setFlags, note}}; the hit side when rng < chance.
+ if(c.roll){const hit=(c.roll.id&&st.forceEv&&st.forceEv.indexOf(c.roll.id)>=0)||rng(st)<c.roll.chance,r=hit?c.roll:(c.roll.else||{});(r.setFlags||[]).forEach(f=>st.flags[f]=true);if(r.note)note=r.note;}
  let vanFail=null;if(c.vanRun&&EP.vanRunLines){const V=EP.vanRunLines;const failAt=V.chance===undefined?0.75:V.chance;
   if(rng(st)<failAt){vanFail={d:0,fP:0,s:0};const lines=V.fail||[""];const line=lines[Math.floor(rng(st)*lines.length)]||"";
    const lo=(V.failT&&V.failT[0])||5,hi=(V.failT&&V.failT[1])||10;const d=lo+Math.floor(rng(st)*(hi-lo+1));
    const fP=Number.isFinite(+V.failP)?+V.failP:0;e.T=(e.T||0)-d;if(fP)e.P=(e.P||0)+fP;st.penaltyMs=(st.penaltyMs||0)+(V.failSeconds===undefined?45:V.failSeconds)*1000;vanFail={d:d,fP:fP,s:(V.failSeconds===undefined?45:V.failSeconds)*1000};
    note=line+" (−"+d+" Patience"+(fP?", +"+fP+" "+((EP.meterLabels&&EP.meterLabels.P)||"Pressure"):"")+", +"+(V.failSeconds===undefined?45:V.failSeconds)+" s)";if(V.failTip)tip=V.failTip;correct=false;}
   else{const lines=V.success||[""];e.T=(e.T||0)+(V.successT===undefined?3:V.successT);note=lines[Math.floor(rng(st)*lines.length)]||"";}}
- if(pepperAdj){const r=pepperAdj;pepperAdj=null;// pepper experiment only: rebalance relative to the normal van-run result above
-  if(!r.skipped&&r.band==="high"){const V=EP.vanRunLines||{};
+ if(pepperAdj){const r=pepperAdj,H=pepperHook()||PEPPER_HOOKS.ep02;pepperAdj=null;// pepper run only: adjust relative to the normal van-run result above
+  if(!H.rescue){// Ep3+: Patience capped at 5 either way; hooks with highR (Ep3, Ep4) also add vanRunLines.pepperHighR Rep on a high score
+   if(!r.skipped&&r.band==="high"){e.T=(e.T||0)+3;note=(note?note+" ":"")+H.high.replace("{n}",r.chilies).replace("{t}",r.total);
+    const VH=EP.vanRunLines||{};if(H.highR&&VH.pepperHighR){e.R=(e.R||0)+VH.pepperHighR;note+=" "+(VH.pepperHighNote||"")+"(+"+VH.pepperHighR+" Reputation)";}}// high-score Rep bonus outside the rescue branch (opt-in per hook: highR; Ep3 and Ep4 enabled per Director Oct 24)
+   else if(!r.skipped&&r.band==="low"){e.T=(e.T||0)-5;note=(note?note+" ":"")+(r.fell?H.fellText:"")+H.drink+" (−5 Patience)";}}
+  else if(!r.skipped&&r.band==="high"){const V=EP.vanRunLines||{};
    if(vanFail){e.T=(e.T||0)+vanFail.d+(V.successT===undefined?3:V.successT);if(vanFail.fP)e.P=(e.P||0)-vanFail.fP;st.penaltyMs=(st.penaltyMs||0)-vanFail.s;tip=c.tip;correct=c.correct;
     note="Pepper Run "+r.chilies+"/"+r.total+": the Boy beats the bad luck. "+((V.success&&V.success[0])||"Right tools.");}
-   else{e.T=(e.T||0)+3;note=(note?note+" ":"")+"Pepper Run "+r.chilies+"/"+r.total+": back fast. (+3 Patience)";}}
-  else if(!r.skipped&&r.band==="low"){e.T=(e.T||0)-5;note=(note?note+" ":"")+(r.fell?"(He took the hedge shortcut.) ":"")+PEPPER_DRINK+" (−5 Patience)";}
+   else{e.T=(e.T||0)+3;note=(note?note+" ":"")+"Pepper Run "+r.chilies+"/"+r.total+": back fast. (+3 Patience)";}
+   if(V.pepperHighR){e.R=(e.R||0)+V.pepperHighR;note+=" "+(V.pepperHighNote||"")+"(+"+V.pepperHighR+" Reputation)";}}
+  else if(!r.skipped&&r.band==="low"){e.T=(e.T||0)-5;note=(note?note+" ":"")+(r.fell?H.fellText:"")+H.drink+" (−5 Patience)";}
   if(r.fullClear)note=(note?note+" ":"")+"Full clear: +1 to the pepper jar.";}
  for(const k of ["P","R","T"])if(e[k])st[k]=clamp(st[k]+e[k]);
  (c.setFlags||[]).forEach(f=>st.flags[f]=true);
@@ -574,7 +587,7 @@ function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
 function lsDel(k){try{localStorage.removeItem(k)}catch(e){}}
 function jget(k,d){try{const v=JSON.parse(lsGet(k));return v===null||v===undefined?d:v}catch(e){return d}}
 function today(){try{return new Date().toISOString().slice(0,10)}catch(e){return ""}}
-const params=new URLSearchParams(location.search);const DEBUG=params.get("debug")==="1";const VERIFY=params.get("verify")==="1";
+const params=new URLSearchParams(location.search);const DEBUG=params.get("debug")==="1"&&params.get("dev")==="1";/* debug panel (Rep, flags) only with ?dev=1 */const VERIFY=params.get("verify")==="1";
 function merchUrl(endId){const id=String(endId||""),h=Object.prototype.hasOwnProperty.call(MERCH_PRODUCTS,id)?MERCH_PRODUCTS[id]:"";
  const base=h?STORE_PRODUCT_BASE+h+"?utm_source=trapfull":MERCH_LINK;return base+(base.indexOf("?")<0?"?":"&")+"utm_content="+encodeURIComponent(id);}
 window.__trapEvents=[];// local event log (QA); only sent when ANALYTICS_ENDPOINT is set
@@ -592,11 +605,21 @@ let CHALLENGE=null;
 function challengeFromQuery(){const ep=params.get("ep"),b=params.get("beat");if(!ep||b===null||!/^[0-9]{1,6}$/.test(b))return null;
  const n=parseInt(b,10);if(!(n>0))return null;if(!hasEp(ep)||!canPlay(ep)||epOf(ep).stub)return null;return {ep:ep,beat:n,seed:seedFromQuery()};}
 function challengeUrl(R){return GAME_URL+"?ep="+encodeURIComponent(R.ep)+"&seed="+encodeURIComponent(R.seed)+"&beat="+Math.max(0,Math.round(R.score));}
-// EXPERIMENT (pepper-pipe pitch A): ?pepper=1 turns the Ep2 van run (e2_06, the Boy fetches; e2_07 is the return) into the Pepper Run minigame.
+// Pepper Run van runs: Ep2 e2_06, Ep3 e3_07 and Ep4 e4_07 (see PEPPER_HOOKS) open the minigame; ?pepper=0 turns it off.
 // Without the flag none of this runs and experiments/pepper-pipe/pepper-run.js is never requested. Off in verify.
-const PEPPER=params.get("pepper")!=="0"&&!VERIFY;/* launch: on by default, ?pepper=0 turns it off */const PEPPER_HOOK={ep:"ep02",scene:"e2_06",choice:0};let pepperAdj=null,pepperActive=false,pepperTok=0;
-function isPepperChoice(i){return PEPPER&&EP&&EP.id===PEPPER_HOOK.ep&&st&&st.scene===PEPPER_HOOK.scene&&i===PEPPER_HOOK.choice;}
-const PEPPER_DRINK="...and he hands Pete a second strawberry smoothie. \"For the road.\" Nobody is going anywhere.";
+const PEPPER=params.get("pepper")!=="0"&&!VERIFY;/* launch: on by default, ?pepper=0 turns it off */// Van-run hooks, one per episode (design/experiments/pepper-run-van-levels.md). Ep2 keeps its shipped rules (rescue = undo the van-run fail).
+// Ep3 (Halloween, e3_07) and Ep4 (steamy alley, e4_07): flavor text plus at most 5 Patience either way, plus +2 Rep on a high score (clear/8) via highR (Director Oct 24); never touches Pressure/time or the van-run roll. Random play and the sims never see the bonus.
+const PEPPER_HOOKS={
+ ep02:{scene:"e2_06",choice:0,level:"ep02",rescue:true,drink:"...and he hands Pete a second strawberry smoothie. \"For the road.\" Nobody is going anywhere.",fellText:"(He took the hedge shortcut.) "},
+ ep03:{scene:"e3_07",choice:0,level:"ep03",rescue:false,highR:true,label:" (Pepper Run 🎃)",
+  high:"Pepper Run {n}/{t}: the Boy sprints back down the cul-de-sac with a pumpkin spice tea for Walt. Walt is weirdly moved. (+3 Patience)",
+  drink:"...and the Boy comes back holding the skeleton grabber from the neighbor's yard. \"For hard-to-reach places.\" Walt is not amused.",fellText:"(Straight into the leaf pile.) "},
+ ep04:{scene:"e4_07",choice:0,level:"ep04",rescue:false,highR:true,label:" (Pepper Run 🌶)",
+  high:"Pepper Run {n}/{t}: the Boy dodges the alley water jet and is back with the element tester before Hector finishes his sentence. (+3 Patience)",
+  drink:"...and the Boy comes back soaked from the alley water jet, holding a garage-sale lamp. \"It was a dollar.\" Gloria is not amused.",fellText:"(He found the drain gap.) "}};
+let pepperAdj=null,pepperActive=false,pepperTok=0;
+function pepperHook(){return PEPPER&&EP&&Object.hasOwn(PEPPER_HOOKS,EP.id)?PEPPER_HOOKS[EP.id]:null;}
+function isPepperChoice(i){const h=pepperHook();return !!h&&st&&st.scene===h.scene&&i===h.choice;}
 const K={meta:"trapfull.v3.meta",shelf:"trapfull.v3.shelf",run:id=>"trapfull.v3."+id+".run",best:id=>"trapfull.v3."+id+".best",endings:id=>"trapfull.v3."+id+".endings"};
 let META={schema:1,lastEpisode:null,muted:false,played:{}};
 function loadMeta(){const m=jget(K.meta,null);if(m&&typeof m==="object"&&m.schema===1)META=m;if(!META.played||typeof META.played!=="object")META.played={};}
@@ -697,7 +720,7 @@ function fmtTime(secs){const s=Math.max(0,secs|0);return Math.floor(s/60)+":"+(s
 setInterval(()=>{if(!st||!EP||$("app").classList.contains("is-hidden"))return;const sc=sceneById[st.scene];if(!sc||sc.end)return;clockTick();drawFoot();},1000);
 function sceneText(sc){let t=sc.text;if(sc.variants)for(let i=0;i<sc.variants.length;i++)if(meets(sc.variants[i].if,st)){t=sc.variants[i].text;break;}
  const pl=EP.patienceLeave;if(pl&&st.flags[pl.flag]&&!sc.end&&pl.sceneLine)t+='<br><em style="color:var(--muted)">'+pl.sceneLine+"</em>";return sub(t);}
-function choiceLabel(c){if(PEPPER&&EP&&EP.id===PEPPER_HOOK.ep&&st&&st.scene===PEPPER_HOOK.scene&&sceneById[st.scene]&&sceneById[st.scene].choices[PEPPER_HOOK.choice]===c)return sub(c.label)+" (Pepper Run 🌶)";const alts=c.labelAlt?[].concat(c.labelAlt):[];for(let i=0;i<alts.length;i++)if(alts[i]&&meets(alts[i].if,st))return alts[i].text;return c.label;}
+function choiceLabel(c){const ph=pepperHook();if(ph&&st&&st.scene===ph.scene&&sceneById[st.scene]&&sceneById[st.scene].choices[ph.choice]===c)return sub(c.label)+(ph.label||" (Pepper Run 🌶)");const alts=c.labelAlt?[].concat(c.labelAlt):[];for(let i=0;i<alts.length;i++)if(alts[i]&&meets(alts[i].if,st))return alts[i].text;return c.label;}
 function panelText(ps,p){if(!ps.hackLines)return p.text||"";
  const ls=(st.hackTips||[]).filter((v,i,a)=>a.indexOf(v)===i).map(k=>ps.hackLines[k]).filter(Boolean);
  if(!ls.length)return p.text||"";
@@ -753,7 +776,7 @@ function drawStage(sc){
  $("stageLabel").textContent=sc.end?"":(typeof sc.caption==="string"?sc.caption:(EP.bgCaptions&&typeof EP.bgCaptions[sc.bg]==="string"?EP.bgCaptions[sc.bg]:(sc.bg||"").replace(/_/g," ")));$("who").textContent=sc.who?plain(sc.who):"";
  const et=$("endtip");et.style.display=sc.end?"flex":"none";et.textContent=sc.end?"Pro Tip: "+(sc.endTip||""):"";
  let img=stage.querySelector("img.bg");
- if(hasBg){if(!img){img=document.createElement("img");img.className="bg";img.alt="";img.onerror=function(){const f=(img.getAttribute("src")||"").split("/").pop();const ix=ART_AVAILABLE.indexOf(f);if(ix>=0)ART_AVAILABLE.splice(ix,1);img.remove();};stage.insertBefore(img,stage.firstChild);}if(img.getAttribute("src")!=="assets/img/"+file)img.src="assets/img/"+file;}
+ if(hasBg){if(!img){img=document.createElement("img");img.className="bg";img.alt="";img.onerror=function(){const f=(img.getAttribute("src")||"").split("/").pop();const ix=ART_AVAILABLE.indexOf(f);if(ix>=0)ART_AVAILABLE.splice(ix,1);img.remove();};stage.insertBefore(img,stage.firstChild);}if(img.getAttribute("src")!==artPath(file))img.src=artPath(file);}
  else if(img)img.remove();
  // bg strips: stage.bgFrames[bg]=n (n frames side by side); stage.bgFrame[scene]=frame or {if,frame}
  if(img){const bn=!sc.end&&S.bgFrames?S.bgFrames[sc.bg]|0:0;if(bn>1){let f=0;const bf=S.bgFrame?S.bgFrame[st.scene]:null;if(typeof bf==="number")f=bf;else if(bf&&meets(bf.if,st))f=bf.frame|0;f=Math.max(0,Math.min(bn-1,f));
@@ -794,7 +817,7 @@ function present(ev){const msgs=[];ev.forEach(e=>{
 function choose(i,pr){const sc=sceneById[st.scene];let c=sc&&sc.choices&&sc.choices[i];if(!c||!meets(c.requires,st)||(c.showIf&&!meets(c.showIf,st)))return;
  if(pepperActive&&pr===undefined)return;// no choice taps/keys while the minigame is open
  if(pr===undefined&&isPepperChoice(i)&&window.PepperRun){const tok=++pepperTok,sc0=st.scene;pepperActive=true;clockTick();
-  const ok=window.PepperRun.start({forceResult:params.get("pepperResult"),onDone:r=>{if(tok!==pepperTok||!pepperActive)return;pepperActive=false;if(!st||st.scene!==sc0)return;choose(i,r||{skipped:true});}});
+  const ok=window.PepperRun.start({level:pepperHook().level,forceResult:params.get("pepperResult"),onDone:r=>{if(tok!==pepperTok||!pepperActive)return;pepperActive=false;if(!st||st.scene!==sc0)return;choose(i,r||{skipped:true});}});
   if(ok===false)pepperActive=false;return;}
  if(pr){pepperAdj=pr;if(pr.fullClear){st.pepperJar=(st.pepperJar||0)+1;if(!DEBUG){META.pepperJar=(META.pepperJar||0)+1;saveMeta();}}window.__pepperLast=pr;}
  clockTick();const ev=[];applyChoice(st,c,ev,i);playSfx(c.sfx||"click");present(ev);
@@ -902,7 +925,7 @@ function loadOptionalImage(src,done){if(!src)return done(null);const im=new Imag
 let preparedCard=null;
 function primeCard(){if(!lastResult)return;const pc=preparedCard={endImg:null,icon:null,pending:2,waiters:[]};const fin=()=>{if(--pc.pending<=0){const w=pc.waiters.splice(0);w.forEach(f=>f());}};
  const endName=endingArtName(lastResult.ending);
- const endSrc=ART_AVAILABLE.indexOf(endName)>=0?"assets/img/"+endName:null;
+ const endSrc=ART_AVAILABLE.indexOf(endName)>=0?artPath(endName):null;
  const iconName=lastResult.collected&&EP.collectible&&EP.collectible.sprite?EP.collectible.sprite+".png":null;
  loadOptionalImage(endSrc,im=>{pc.endImg=im;fin();});
  loadOptionalImage(iconName?"assets/img/"+iconName:null,im=>{pc.icon=im;fin();});}
@@ -1171,7 +1194,21 @@ loadEpisodes(()=>{migrateV2();loadMeta();setMuteIcon();booted=true;
  CHALLENGE=challengeFromQuery();if(CHALLENGE){const bn=$("challengeBanner");const ep=epOf(CHALLENGE.ep);bn.innerHTML="";const bb=document.createElement("b");bb.textContent="Beat "+CHALLENGE.beat+" on this call";bn.appendChild(bb);bn.appendChild(document.createElement("br"));
   bn.appendChild(document.createTextNode("A friend challenged you: Ep "+ep.week+": "+ep.title+(CHALLENGE.seed?" · same call (seed "+CHALLENGE.seed+")":"")));bn.classList.remove("is-hidden");track("challenge_opened",CHALLENGE.ep);}
  showTitle();});
+// Ending suite only (?test=1). Forces event rolls, mutes, and answers "is this art listed?".
+// Without that query the object is null and play is unchanged.
+window.__TRAP_TEST=params.get("test")==="1"?{
+ setForceEvents:function(ids){if(!st)return;st.forceEv=(Array.isArray(ids)?ids:[]).filter(function(x){return typeof x==="string";}).slice();},
+ mute:function(){META.muted=true;try{Object.values(audioEls).forEach(function(a){a.pause();});}catch(e){}},
+ artHas:function(name){return ART_AVAILABLE.indexOf(name)>=0;},
+ // freshState accepts the verifier seed VERIFY1. A ?seed= in the URL must be 6 characters, so the suite does not use that.
+ startRun:function(epId,seed,ids){if(!epOf(epId))return null;useEpisode(epId);pepperAdj=null;pepperActive=false;lastResult=null;
+  st=freshState(seed||"VERIFY1");if(ids&&ids.length)st.forceEv=ids.filter(function(x){return typeof x==="string";}).slice();
+  var ev=[];enterScene(st,st.scene,ev);META.muted=true;try{Object.values(audioEls).forEach(function(a){a.pause();});}catch(e){}
+  started=true;screen("game");clockStart();render();return st.seed;}
+}:null;
 window.__TRAP={get episodes(){return EPISODES;},get state(){return st;},get result(){return lastResult;},scoreOf:scoreOf,seedToState:seedToState};
 </script>
+<link rel="stylesheet" href="ui3.css">
+<script src="ui3.js"></script>
 </body>
 </html>
