@@ -1,0 +1,52 @@
+/* Ep3 upgrade UI skin (M4). Art: art/ep3/ui_mockups (title/choices/states) + parts/ 9-slices. Integer scale (2x) only, pixelated. */
+@font-face{font-family:"Pixelify Sans";src:url(assets/fonts/PixelifySans.ttf) format("truetype");font-display:swap}
+:root{--u3cream:#f3e6c8;--u3gold:#d7c07a;--u3amber:#e2a53a;--u3red:#c4492c;--u3green:#7fbf4a;--u3navy:#1e2430}
+body.ui3t #overlay,body.ui3 #app,body.ui3 #select{font-family:"Pixelify Sans",monospace}
+body.ui3t #overlay{background:url(assets/img/ui3/fill_stripe_navy_12.png) 0 0/24px 24px repeat;image-rendering:pixelated}
+body.ui3t #overlay>*{position:relative;z-index:1}
+body.ui3t #overlay::before{content:"";position:absolute;left:50%;top:50%;width:min(440px,calc(100% - 24px));height:min(640px,calc(100% - 24px));transform:translate(-50%,-50%);border:12px solid;border-image:url(assets/img/ui3/panel_card.png) 6 fill/12px stretch;image-rendering:pixelated;z-index:0}
+body.ui3t #overlay p{color:var(--u3cream);font-size:20px;text-transform:uppercase;letter-spacing:0}
+body.ui3t #overlay .tap{color:var(--u3gold);font-size:30px}
+body.ui3t .big,body.ui3 .big{border:12px solid;border-image:url(assets/img/ui3/btn_default.png) 6 fill/12px stretch;border-radius:0;background:none;color:var(--u3cream);font-family:"Pixelify Sans",monospace;font-size:20px;font-weight:400;text-align:left;padding:0 4px;image-rendering:pixelated;max-width:400px}
+body.ui3t #btnWeek{border-image-source:url(assets/img/ui3/btn_hover.png)}
+body.ui3t .iconbtn,body.ui3 .iconbtn{border:12px solid;border-image:url(assets/img/ui3/btn_default.png) 6 fill/12px stretch;border-radius:0;background:none;padding:0;min-width:48px;min-height:48px;image-rendering:pixelated}
+body.ui3t #overlay .u3tag{border:12px solid;border-image:url(assets/img/ui3/panel_header.png) 6 fill/12px stretch;color:var(--u3cream);font-size:20px;padding:0 6px;image-rendering:pixelated}
+body.ui3 #app{background:url(assets/img/ui3/fill_stripe_dark_12.png) 0 0/24px 24px repeat;image-rendering:pixelated}
+body.ui3 #app header{border:12px solid;border-image:url(assets/img/ui3/panel_header.png) 6 fill/12px stretch;padding:0 4px;image-rendering:pixelated}
+body.ui3 #app header h1{font-size:20px;color:var(--u3cream);letter-spacing:0}
+body.ui3 #epTitle{font-size:20px;color:var(--u3gold);text-transform:uppercase}
+body.ui3 .meters{font-size:20px;color:var(--u3cream)}
+body.ui3 .meters img{width:24px;height:24px;vertical-align:-4px}
+body.ui3 .bar{position:relative;height:16px;border:4px solid;border-image:url(assets/img/ui3/meter_frame.png) 2 fill/4px stretch;border-radius:0;background:none;overflow:visible;image-rendering:pixelated}
+body.ui3 .bar i{transition:width .4s steps(8)}
+body.ui3 .bar .gt{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--u3cream);opacity:.7}
+body.ui3 .bar .gt b{position:absolute;top:-16px;left:-6px;font-size:10px;font-weight:400;color:var(--u3gold)}
+body.ui3 .u3num{display:inline-block;margin-left:6px;vertical-align:-2px}
+body.ui3 .meters>div{position:relative}
+body.ui3 .meters>div.flashUp .bar{box-shadow:0 0 0 2px var(--u3green)}
+body.ui3 .meters>div.flashDown .bar{box-shadow:0 0 0 2px var(--u3red)}
+body.ui3 .meters>div.nearGate .bar{animation:u3pulse 1s steps(2) infinite}
+@keyframes u3pulse{50%{box-shadow:0 0 0 2px var(--u3amber)}}
+.u3float{position:absolute;right:0;top:0;pointer-events:none;animation:u3float .9s steps(9) forwards;z-index:5}
+@keyframes u3float{to{transform:translateY(-24px);opacity:0}}
+body.ui3 #stage{border:8px solid;border-image:url(assets/img/ui3/panel_card.png) 6 fill/12px stretch;border-radius:0}
+body.ui3 .card{border:12px solid;border-image:url(assets/img/ui3/panel_card.png) 6 fill/12px stretch;border-radius:0;background:none;padding:4px 6px;image-rendering:pixelated}
+body.ui3 #text{font-size:20px;line-height:1.3}
+body.ui3 button.choice{border:12px solid;border-image:url(assets/img/ui3/btn_default.png) 6 fill/12px stretch;border-radius:0;background:none;padding:0 4px;color:var(--u3cream);font-family:"Pixelify Sans",monospace;font-size:20px;line-height:1.2;image-rendering:pixelated}
+body.ui3 button.choice:hover,body.ui3 button.choice:focus-visible{border-image-source:url(assets/img/ui3/btn_hover.png);outline:none}
+body.ui3 button.choice:active{border-image-source:url(assets/img/ui3/btn_press.png);transform:translateY(2px)}
+body.ui3 button.choice.locked{opacity:1;border-image-source:url(assets/img/ui3/btn_disabled.png);color:#a89878}
+body.ui3 button.choice .hint{color:var(--u3amber);font-size:20px}
+body.ui3 button.choice .k{color:var(--u3cream)}
+.u3chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;margin-top:4px}
+.u3chip{display:inline-flex;align-items:center;gap:4px;border:8px solid;border-image:url(assets/img/ui3/chip_up.png) 4 fill/8px stretch;padding:0 2px;font-size:20px;line-height:20px;color:#12100c;image-rendering:pixelated}
+.u3chip.dn{border-image-source:url(assets/img/ui3/chip_down.png);color:var(--u3cream)}
+.u3chip.dale{border-image-source:url(assets/img/ui3/chip_slot.png);color:var(--u3gold)}
+.u3chip.slot{border-image-source:url(assets/img/ui3/chip_slot.png);color:var(--u3cream)}
+.u3d{display:inline-block;width:10px;height:14px;margin-right:2px;background:currentColor;-webkit-mask:url(assets/img/ui3/digits_sheet_10px.png) 0 0/146px 18px no-repeat;mask:url(assets/img/ui3/digits_sheet_10px.png) 0 0/146px 18px no-repeat;image-rendering:pixelated;vertical-align:-1px}
+#u3timer{display:none;font-size:20px;color:var(--u3amber);text-align:center}
+#u3timer.on{display:block}
+#u3timer .tb{height:8px;background:var(--u3amber);transition:width 1s linear;margin-top:2px}
+body.ui3 #debug{font:16px "Pixelify Sans",monospace}
+@media (prefers-reduced-motion:reduce){body.ui3 .bar i{transition:none}.u3float{animation:none;display:none}body.ui3 .meters>div.nearGate .bar{animation:none;box-shadow:0 0 0 2px var(--u3amber)}#u3timer .tb{transition:none}}
+.u3vh{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0;padding:0;margin:-1px}
