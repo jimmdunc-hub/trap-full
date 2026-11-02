@@ -154,7 +154,7 @@ body.panelOpen #app{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
   <div class="tap" id="tapHint">TAP TO START</div>
   <button type="button" class="big" id="btnWeek">This week's call</button>
   <a class="big" id="btnPepper" href="https://jimmdunc-hub.github.io/pepper-run/?utm_source=trapfull&amp;utm_medium=web&amp;utm_campaign=bonus" onclick="event.stopPropagation()" style="display:flex;align-items:center;justify-content:center;text-decoration:none;background:#ef4b3a;color:#16101f;margin-top:8px">🌶️ Bonus: Pepper Run</a>
-  <a class="big merch" id="btnMerchTitle" href="https://petinplumbco.myshopify.com/?utm_source=trapfull&amp;utm_medium=web&amp;utm_campaign=game&amp;utm_content=title" target="_blank" rel="noopener">Merch</a>
+  <a class="big merch" id="btnMerchTitle" href="https://petinplumbco.myshopify.com/?utm_source=trapfull&amp;utm_medium=web&amp;utm_campaign=pepperrun" target="_blank" rel="noopener">Merch</a>
   <div class="row">
     <button type="button" class="big alt" id="btnSelect">Episode select</button>
     <button type="button" class="iconbtn muteBtn" aria-label="Mute">🔊</button>
@@ -184,6 +184,7 @@ body.panelOpen #app{padding-bottom:calc(76px + env(safe-area-inset-bottom))}
 <script>
 "use strict";
 const GAME_URL="https://jimmdunc-hub.github.io/trap-full/";
+const TITLE_MERCH_LINK="https://petinplumbco.myshopify.com/?utm_source=trapfull&utm_medium=web&utm_campaign=pepperrun";// title button + in-game van run (Piquin, Nov 1)
 const MERCH_LINK="https://petinplumbco.myshopify.com/?utm_source=trapfull&utm_medium=web&utm_campaign=game";
 const FOLLOW_LINK="https://x.com/Pipe_petin";
 // ---------- growth: analytics, per-ending merch, challenge links, endings tracker ----------
@@ -835,7 +836,7 @@ function present(ev){const msgs=[];ev.forEach(e=>{
 function choose(i,pr){const sc=sceneById[st.scene];let c=sc&&sc.choices&&sc.choices[i];if(!c||!meets(c.requires,st)||(c.showIf&&!meets(c.showIf,st)))return;
  if(pepperActive&&pr===undefined)return;// no choice taps/keys while the minigame is open
  if(pr===undefined&&isPepperChoice(i)&&window.PepperRun){const tok=++pepperTok,sc0=st.scene;pepperActive=true;clockTick();
-  const ok=window.PepperRun.start({level:pepperHook().level,muted:!!(META&&META.muted),forceResult:params.get("pepperResult"),onDone:r=>{if(tok!==pepperTok||!pepperActive)return;pepperActive=false;if(!st||st.scene!==sc0)return;choose(i,r||{skipped:true});}});
+  const ok=window.PepperRun.start({merchLink:TITLE_MERCH_LINK,level:pepperHook().level,muted:!!(META&&META.muted),forceResult:params.get("pepperResult"),onDone:r=>{if(tok!==pepperTok||!pepperActive)return;pepperActive=false;if(!st||st.scene!==sc0)return;choose(i,r||{skipped:true});}});
   if(ok===false)pepperActive=false;return;}
  if(pr){pepperAdj=pr;if(pr.fullClear){st.pepperJar=(st.pepperJar||0)+1;if(!DEBUG){META.pepperJar=(META.pepperJar||0)+1;saveMeta();}}window.__pepperLast=pr;}
  clockTick();const ev=[];applyChoice(st,c,ev,i);playSfx(c.sfx||"click");present(ev);
@@ -1214,7 +1215,7 @@ function loadEpisodes(done){const dev=params.get("dev")==="1";
  const list=(window.EPISODES_INDEX||[]).filter(e=>e.file&&(dev||!e.stub));let left=list.length;if(!left)return done();
  list.forEach(e=>{const s=document.createElement("script");s.src=e.file;s.onload=s.onerror=()=>{if(--left===0)done();};document.head.appendChild(s);});}
 loadMeta();registerBuiltinEp00();
-if(PEPPER){const s=document.createElement("script");s.src="experiments/pepper-pipe/pepper-run.js";if(PEPPER_TEST)s.onload=()=>{window.PepperRun.start({level:PEPPER_TEST,muted:!!(META&&META.muted),forceResult:params.get("pepperResult"),onDone:r=>{window.__pepperLast=r;}});};document.head.appendChild(s);}
+if(PEPPER){const s=document.createElement("script");s.src="experiments/pepper-pipe/pepper-run.js";if(PEPPER_TEST)s.onload=()=>{window.PepperRun.start({merchLink:TITLE_MERCH_LINK,level:PEPPER_TEST,muted:!!(META&&META.muted),forceResult:params.get("pepperResult"),onDone:r=>{window.__pepperLast=r;}});};document.head.appendChild(s);}
 loadEpisodes(()=>{migrateV2();loadMeta();setMuteIcon();booted=true;
  if(VERIFY){const which=params.get("ep")||"ep00";const r=verify(which);window.__TRAP_FULL_VERIFY__=r;
   const pre=document.createElement("pre");pre.id="verifyOut";pre.textContent=JSON.stringify(r,null,1);

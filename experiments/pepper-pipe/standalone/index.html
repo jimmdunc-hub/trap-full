@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pepper Run · Petin PlumbCo</title><meta name="description" content="Send the Boy to the van, grab the chilies, don't fall in the hedge. A 30-second runner from TRAP FULL by Petin PlumbCo."><meta property="og:type" content="website"><meta property="og:url" content="https://jimmdunc-hub.github.io/pepper-run/"><meta property="og:title" content="Pepper Run 🌶️ · Petin PlumbCo"><meta property="og:description" content="Send the Boy to the van, grab the chilies, don't fall in the hedge. A 30-second runner from TRAP FULL by Petin PlumbCo."><meta property="og:image" content="https://jimmdunc-hub.github.io/pepper-run/og.png"><meta property="og:image:width" content="1200"><meta property="og:image:height" content="630"><meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="Pepper Run 🌶️ · Petin PlumbCo"><meta name="twitter:description" content="Send the Boy to the van, grab the chilies, don't fall in the hedge. A 30-second runner from TRAP FULL by Petin PlumbCo."><meta name="twitter:image" content="https://jimmdunc-hub.github.io/pepper-run/og.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Cpath d=%27M16 4h4v5h-4z%27 fill=%27%233c8d2f%27/%3E%3Cellipse cx=%2716%27 cy=%2719%27 rx=%277%27 ry=%2712%27 fill=%27%23ef4b3a%27 transform=%27rotate(-25 16 19)%27/%3E%3C/svg%3E">
+<style>#levels{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}#intro #levels button{font:inherit;font-weight:600;color:#fff3e4;background:#2a2318;border:2px solid #d7c07a;border-radius:10px;padding:8px 14px;min-height:44px}#intro #levels button[aria-pressed=true]{background:#ef4b3a;color:#16101f;border-color:#fff3e4}html,body{margin:0;background:#16101f;color:#fff3e4;font:16px/1.4 system-ui,sans-serif}#intro{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;text-align:center}
+#intro button{font:inherit;font-weight:700;color:#16101f;background:#ef4b3a;border:0;border-radius:12px;padding:14px 26px;min-height:48px}#out{color:#d7c07a;max-width:420px}</style>
+<script data-goatcounter="https://petinplumbco.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</head><body>
+<div id="intro"><h1 style="margin:0;color:#ef4b3a">Pepper Run</h1><p id="blurb">At Ms. Reyes’s slab job, Pete sends the Boy to the van for a bucket, chisel and dust mask. 30–45 seconds, grab the chilies.</p><div id="levels" role="group" aria-label="Pick a van run"></div>
+<button type="button" id="go">Tap to start</button><p id="out" aria-live="polite"></p><a id="merchBtn" hidden target="_blank" rel="noopener" style="display:none;align-items:center;justify-content:center;min-height:52px;min-width:260px;border-radius:12px;background:#e0a33a;color:#12100c;font-weight:700;text-decoration:none">Get the Merch</a><a href="https://jimmdunc-hub.github.io/trap-full/?utm_source=pepperrun&amp;utm_medium=web&amp;utm_campaign=pepperrun" style="color:#d7c07a">Play TRAP FULL</a></div>
+<script src="pepper-run.js"></script>
+<script>
+(function(){const q=new URLSearchParams(location.search);const go=document.getElementById("go"),out=document.getElementById("out"),lv=document.getElementById("levels"),blurb=document.getElementById("blurb");
+ const text={high:"Right tools, first try. +3 Patience (or a botched van run gets fixed).",mid:"Normal van run, no change.",low:"He also brought a drink. −5 Patience on top of the normal van run."};
+ // Van runs, one per TRAP FULL episode. A run unlocks with its episode (same dates as TRAP FULL's isReleased); ?dev=1 shows all for QA.
+ const LV=[{id:"ep02",name:"Ep2 Slab",rel:"",b:"At Ms. Reyes’s slab job, Pete sends the Boy to the van for a bucket, chisel and dust mask. 30–45 seconds, grab the chilies."},
+  {id:"ep03",name:"Ep3 Haunted",rel:"",b:"Walt’s mystery leak. Pete needs a drywall saw, inspection light and shop vac from the van."},
+  {id:"ep04",name:"Ep4 Alley",rel:"2026-11-06T08:00:00-06:00",b:"Gloria’s water heater. Pete needs the element tester from the van."},
+  {id:"ep05",name:"Ep5 Hold",rel:"2026-11-11T08:00:00-06:00",b:"Hold, Please. Run the driveway job site to the van on the beat of the hold music."}];
+ const dev=q.get("dev")==="1",open=LV.filter(l=>dev||!l.rel||Date.now()>=Date.parse(l.rel));
+ let cur=(open.find(l=>l.id===q.get("level"))||open[open.length-1]).id;
+ function pick(id){cur=id;const l=LV.find(x=>x.id===id);blurb.textContent=l.b;for(const b of lv.children)b.setAttribute("aria-pressed",String(b.dataset.id===id));}
+ for(const l of open){const b=document.createElement("button");b.type="button";b.dataset.id=l.id;b.textContent=l.name;b.onclick=()=>pick(l.id);lv.appendChild(b);}
+ pick(cur);
+ const m=document.getElementById("merchBtn");m.addEventListener("click",()=>{if(dev)return;try{const gc=window.goatcounter;if(gc&&typeof gc.count==="function")gc.count({path:"click/merch-pepperrun",title:"Get the Merch (Pepper Run)",event:true});}catch(e){}});
+ function run(){go.disabled=true;PepperRun.start({level:cur,assetBase:"assets/img/",forceResult:q.get("pepperResult"),onDone:function(r){go.disabled=false;go.textContent="Run again";
+  out.textContent=(r.skipped?"Skipped (normal result). ":"Chilies "+r.chilies+"/"+r.total+(r.fell?", fell into the hedge":"")+(r.fullClear?", full clear (+1 to the pepper jar)":"")+". ")+(r.skipped?"":text[r.band]);window.__pepperLast=r;m.href=PepperRun.MERCH_LINK;m.hidden=false;m.style.display="flex";}});}
+ go.onclick=run;})();
+</script></body></html>

@@ -10,7 +10,7 @@
 // --- constants from Pepper Pipe ---
 const MAXV=252,ACC_G=1900,ACC_A=1280,FRIC_G=2400,FRIC_A=260,JUMP1=-548,JUMP2=-492,GRAV_UP=1480,GRAV_DN=2860,APEX=86,MAXFALL=880,COYOTE=0.11,BUFFER=0.13;
 // Same link as the game's ending cards.
-const MERCH_LINK="https://jimmdunc-hub.github.io/links/?utm_source=trapfull";
+const MERCH_LINK="https://petinplumbco.myshopify.com/?utm_source=pepperrun&utm_medium=web&utm_campaign=pepperrun";// standalone Pepper Run; TRAP FULL passes merchLink (utm_source=trapfull)
 const PW=28,PH=54,VIEW_W=960,VIEW_H=540,TIME_LIMIT=45;
 const KEYS={left:["ArrowLeft","KeyA"],right:["ArrowRight","KeyD"],jump:["ArrowUp","KeyW","Space"],drop:["ArrowDown","KeyS"]};
 // --- one short level (Ep2, Ms. Reyes’s job): her front step -> hedges, ladder racks, cooler lid -> the van's tool bin ---
