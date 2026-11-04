@@ -1,6 +1,6 @@
 // Episode catalog. Each entry with a file is loaded by a script tag (no fetch).
 // Adding an episode: drop episodes/epNN.js (it calls registerEpisode) and add one line here.
-// Ep 0 is registered by the engine until episodes/ep00.js is listed with a file.
+// Ep 0 content is episodes/ep00.js (engine.js only holds shared GLOBAL_TIPS + runtime).
 // stub:true on an index line: the script is not requested unless the URL has ?dev=1.
 // The episode file also sets stub:true so it stays off the weekly slot.
 window.EPISODES_INDEX=[
