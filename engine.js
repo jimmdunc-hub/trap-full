@@ -689,13 +689,14 @@ $("btnSelect").onclick=e=>{e.stopPropagation();openSelect();};
 $("selBack").onclick=showTitle;
 $("homeBtn").onclick=openSelect;
 $("restartBtn").onclick=()=>{let ok=true;try{ok=window.confirm("Start a new call?")}catch(e){ok=true}if(ok&&EP)startEpisode(EP.id,true);};
+function titleControl(node){return !!(node&&node.closest&&node.closest("a[href],button,input,select,textarea"));}
 const ov=$("overlay");
-ov.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("#btnSelect,.muteBtn"))return;startWeek();});
-let tx=0,ty=0,tt=0,touchBtn=false;
-ov.addEventListener("touchstart",e=>{const t=e.changedTouches[0];tx=t.clientX;ty=t.clientY;tt=Date.now();touchBtn=!!(e.target.closest&&e.target.closest("button"));},{passive:true});
-ov.addEventListener("touchend",e=>{if(touchBtn)return;const t=e.changedTouches[0];if(Math.hypot(t.clientX-tx,t.clientY-ty)<12&&Date.now()-tt<600){e.preventDefault();startWeek();}},{passive:false});
+ov.addEventListener("click",e=>{if(titleControl(e.target))return;startWeek();});
+let tx=0,ty=0,tt=0,touchControl=false;
+ov.addEventListener("touchstart",e=>{const t=e.changedTouches[0];tx=t.clientX;ty=t.clientY;tt=Date.now();touchControl=titleControl(e.target);},{passive:true});
+ov.addEventListener("touchend",e=>{if(touchControl)return;const t=e.changedTouches[0];if(t&&Math.hypot(t.clientX-tx,t.clientY-ty)<12&&Date.now()-tt<600){e.preventDefault();startWeek();}},{passive:false});
 document.addEventListener("keydown",e=>{
- if(!$("overlay").classList.contains("is-hidden")){if(e.key==="Enter"||e.key===" "){const ae=document.activeElement;if(ae&&ae.closest&&ae.closest("#btnSelect,.muteBtn"))return;e.preventDefault();startWeek();}return;}
+ if(!$("overlay").classList.contains("is-hidden")){if(e.key==="Enter"||e.key===" "){if(titleControl(document.activeElement))return;e.preventDefault();startWeek();}return;}
  if(!$("select").classList.contains("is-hidden")){if(e.key==="Escape")showTitle();return;}
  if(!st||!sceneById[st.scene])return;
  if(pepperActive)return;// pepper experiment: the minigame owns the keyboard while its overlay is open
